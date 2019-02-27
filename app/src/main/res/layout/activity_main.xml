@@ -32,35 +32,11 @@
             android:orientation="vertical">
 
             <Button
-                android:id="@+id/progress"
-                android:layout_width="600px"
-                android:layout_height="100px"
-                android:onClick="onBtnClick"
-                android:text="测试progress"
-                android:textAllCaps="false" />
-
-            <Button
-                android:id="@+id/dialog"
-                android:layout_width="600px"
-                android:layout_height="100px"
-                android:onClick="onBtnClick"
-                android:text="测试dialog"
-                android:textAllCaps="false" />
-
-            <Button
                 android:id="@+id/http"
                 android:layout_width="600px"
                 android:layout_height="100px"
                 android:onClick="onBtnClick"
                 android:text="测试http"
-                android:textAllCaps="false" />
-
-            <Button
-                android:id="@+id/activity"
-                android:layout_width="600px"
-                android:layout_height="100px"
-                android:onClick="onBtnClick"
-                android:text="测试activity跳转"
                 android:textAllCaps="false" />
 
         </LinearLayout>

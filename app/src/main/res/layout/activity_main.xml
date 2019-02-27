@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="@style/AppTheme.PopupOverlay" />
+
+    </android.support.design.widget.AppBarLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100px">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/progress"
+                android:layout_width="600px"
+                android:layout_height="100px"
+                android:onClick="onBtnClick"
+                android:text="测试progress"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/dialog"
+                android:layout_width="600px"
+                android:layout_height="100px"
+                android:onClick="onBtnClick"
+                android:text="测试dialog"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/http"
+                android:layout_width="600px"
+                android:layout_height="100px"
+                android:onClick="onBtnClick"
+                android:text="测试http"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/activity"
+                android:layout_width="600px"
+                android:layout_height="100px"
+                android:onClick="onBtnClick"
+                android:text="测试activity跳转"
+                android:textAllCaps="false" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

@@ -1,0 +1,121 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+static def buildTime() {
+    return new Date().format("yyyyMMdd")
+}
+rootProject.ext {
+    // Sdk and tools
+    compileSdkVersion = 25
+    minSdkVersion = 19
+    targetSdkVersion = 25
+    versionCode = 1
+    versionName = "1.0"
+}
+
+android {
+    signingConfigs {
+//        release {
+//            storeFile file('c_tangtown.jks')
+//            storePassword '123456'
+//            keyAlias '123456'
+//            keyPassword '123456'
+//        }
+    }
+
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.xhttp.org"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
+//        multiDexEnabled true
+        //打包时间
+        resValue "string", "build_time", buildTime()
+
+        //ARouter
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [moduleName: project.getName()]
+            }
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+//    lintOptions {
+//        // 设置为 true时lint将不报告分析的进度
+//        quiet true
+//        // 如果为 true，则当lint发现错误时停止 gradle构建
+//        abortOnError false
+//        // 如果为 true，则只报告错误
+//        ignoreWarnings true
+//        // 如果为 true，则当有错误时会显示文件的全路径或绝对路径 (默认情况下为true)
+//        //absolutePaths true
+//        // 如果为 true，则检查所有的问题，包括默认不检查问题
+//        checkAllWarnings false
+//        // 如果为 true，则将所有警告视为错误
+//        warningsAsErrors false
+//        // * 仅 * 检查给定的问题 id
+//        check 'NewApi', 'InlinedApi'
+//        // 如果为true，则在错误报告的输出中不包括源代码行
+//        noLines false
+//        // 如果为 true，则对一个错误的问题显示它所在的所有地方，而不会截短列表，等等。
+//        showAll true
+//        // 设置为 true， 将使所有release 构建都以issus的严重性级别为fatal（severity=false）的设置来运行lint
+//        // 并且，如果发现了致命（fatal）的问题，将会中止构建（由上面提到的 abortOnError 控制）
+//        checkReleaseBuilds true
+//    }
+
+    buildTypes {
+//        release {
+            //更改AndroidManifest.xml中预先定义好占位符信息
+            //manifestPlaceholders = [app_icon: "@drawable/icon"]
+            // 不显示Log
+//            buildConfigField "boolean", "SYSTEM", "false"
+//            //是否zip对齐
+//            zipAlignEnabled false
+//            // 缩减resource文件
+//            shrinkResources false
+//            //Proguard
+//            minifyEnabled false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            //签名
+//            signingConfig signingConfigs.release
+//        }
+
+//        debug {
+            //给applicationId添加后缀“.debug”
+//            applicationIdSuffix ".debug"
+            //manifestPlaceholders = [app_icon: "@drawable/launch_beta"]
+//            buildConfigField "boolean", "SYSTEM", "true"
+//            zipAlignEnabled false
+//            shrinkResources false
+//            minifyEnabled false
+//            signingConfig signingConfigs.release
+//            debuggable true
+//        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation project(':lib')
+//    implementation project(':lib_res')
+//    if (!isModule.toBoolean()) {
+//        implementation project(':module_main')
+//        implementation project(':module_coupon')
+//        implementation project(':module_event')
+//        implementation project(':test')
+//    }
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+}
+
+
+
+
+

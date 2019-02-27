@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:apps="http://schemas.android.com/apk/res-auto"
+    android:background="@color/black"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.app.org.view.BaseTitle
+        android:id="@+id/baseTitle"
+        android:background="@color/bg_gray"
+        android:layout_width="match_parent"
+        android:layout_height="100px">
+    </com.app.org.view.BaseTitle>
+
+    <Button
+        android:layout_gravity="center"
+        android:textAllCaps="false"
+        android:onClick="onBtnClick"
+        android:id="@+id/btn_go"
+        android:text="跳转"
+        android:layout_width="600px"
+        android:layout_height="100px" />
+</LinearLayout>

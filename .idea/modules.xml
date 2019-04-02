@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/XHttpUtils.iml" filepath="$PROJECT_DIR$/XHttpUtils.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/lib/lib.iml" filepath="$PROJECT_DIR$/lib/lib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lib_http/lib_http.iml" filepath="$PROJECT_DIR$/lib_http/lib_http.iml" />
     </modules>
   </component>
 </project>

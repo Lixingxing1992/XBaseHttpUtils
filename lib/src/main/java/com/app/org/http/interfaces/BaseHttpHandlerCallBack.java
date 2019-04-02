@@ -14,7 +14,6 @@ public class BaseHttpHandlerCallBack implements Handler.Callback{
     public String errorMsg;
     @Override
     public boolean handleMessage(Message message) {
-
         return false;
     }
 }

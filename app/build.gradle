@@ -5,6 +5,7 @@ apply plugin: 'kotlin-android-extensions'
 static def buildTime() {
     return new Date().format("yyyyMMdd")
 }
+
 rootProject.ext {
     // Sdk and tools
     compileSdkVersion = 25
@@ -41,6 +42,7 @@ android {
                 arguments = [moduleName: project.getName()]
             }
         }
+        vectorDrawables.useSupportLibrary = true
     }
 
     lintOptions {
@@ -73,9 +75,9 @@ android {
 
     buildTypes {
 //        release {
-            //更改AndroidManifest.xml中预先定义好占位符信息
-            //manifestPlaceholders = [app_icon: "@drawable/icon"]
-            // 不显示Log
+        //更改AndroidManifest.xml中预先定义好占位符信息
+        //manifestPlaceholders = [app_icon: "@drawable/icon"]
+        // 不显示Log
 //            buildConfigField "boolean", "SYSTEM", "false"
 //            //是否zip对齐
 //            zipAlignEnabled false
@@ -84,14 +86,14 @@ android {
 //            //Proguard
 //            minifyEnabled false
 //            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            //签名
+        //签名
 //            signingConfig signingConfigs.release
 //        }
 
 //        debug {
-            //给applicationId添加后缀“.debug”
+        //给applicationId添加后缀“.debug”
 //            applicationIdSuffix ".debug"
-            //manifestPlaceholders = [app_icon: "@drawable/launch_beta"]
+        //manifestPlaceholders = [app_icon: "@drawable/launch_beta"]
 //            buildConfigField "boolean", "SYSTEM", "true"
 //            zipAlignEnabled false
 //            shrinkResources false
@@ -104,18 +106,13 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation project(':lib')
-//    implementation project(':lib_res')
-//    if (!isModule.toBoolean()) {
-//        implementation project(':module_main')
-//        implementation project(':module_coupon')
-//        implementation project(':module_event')
-//        implementation project(':test')
-//    }
+    implementation project(':lib_http')
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    implementation 'com.android.support:support-v4:25.4.0'
+    implementation 'com.android.support:support-vector-drawable:25.4.0'
+    implementation 'com.android.support:appcompat-v7:25.4.0'
+
+    api "org.jetbrains.kotlin:kotlin-stdlib-jre7:1.1.51"
+    api "org.jetbrains.kotlin:kotlin-reflect:1.1.51"
+    api 'org.jetbrains.anko:anko-commons:+'
 }
-
-
-
-
-

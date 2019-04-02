@@ -8,4 +8,13 @@
     <string name="crash_dialog_title">发送崩溃日志</string>
     <string name="crash_dialog_ok_toast">发送成功</string>
     <string name="title_activity_main">MainActivity</string>
+
+
+    <string-array name="http_type">
+        <item>post</item>
+        <item>get</item>
+        <item>None</item>
+    </string-array>
+
+
 </resources>

@@ -4,12 +4,10 @@
 
 ###使用说明:
 
-    ```Java
-compile ""
-    ```
+    compile ""
     
-    在Application中初始化：
-     ```Java
+    1.在Application中初始化：
+    
     // 打开全局的log日志开关。
     // 这个方法会被 使用BaseHttpUtils().initOpenLog(boolean openLog)方法的地方覆盖掉，但是不影响在其他地方调用时候的log打印
     static void init(boolean openLogs);
@@ -17,7 +15,7 @@ compile ""
     // 这个方法会被 使用BaseHttpUtils().initIHttpService(IHttpService iHttpService) 和 BaseHttpUtils().initIDataListener(IDataListener iDataListenerStatics)
     //      方法的地方覆盖掉，但是不影响在其他代码中的调用
     static void init(IHttpService iHttpServiceStatics, IDataListener iDataListenerStatics) 
-    ```
+    
 ###版本说明:
 
 >1.0 

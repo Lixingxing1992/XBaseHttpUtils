@@ -6,8 +6,11 @@
 
 引用库:
 
-    compile ""
-
+    implementation 'com.github.Lixingxing1992:XHttpUtils:Tag'
+    本库用到了GOSN,如果有冲突的话,可以尝试
+    implementation ('com.github.Lixingxing1992:XHttpUtils:Tag'){
+                exclude group: 'com.google.code.gson', module: 'gson'
+            }
 
 1.在Application中初始化：
     
@@ -32,4 +35,4 @@
     
 ###版本说明:
 
->1.0 
+>1.0-beta  

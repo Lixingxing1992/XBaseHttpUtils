@@ -3,14 +3,14 @@ package com.xhttp.lib.util.encryption;
 import android.os.Handler;
 import android.os.Message;
 
+import com.xhttp.lib.util.decoder.BASE64Decoder;
+import com.xhttp.lib.util.decoder.BASE64Encoder;
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.IvParameterSpec;
-
-import Decoder.BASE64Decoder;
-import Decoder.BASE64Encoder;
 
 public class BaseEncodeUtil
 {

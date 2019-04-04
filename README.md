@@ -20,6 +20,7 @@
         static void init(IHttpService iHttpServiceStatics, IDataListener iDataListenerStatics) 
     
 2.请求处理工具类: IHttpService 可以实现自己的IHttpService,只需要继承IHttpService并实现下面的方法
+        
         // 处理参数方法  get请求下这个方法不使用
         Object parseParams(BaseHttpParams baseHttpParams,BaseResult baseResult);
         // 请求方法 会获取parseParams的参数进行请求

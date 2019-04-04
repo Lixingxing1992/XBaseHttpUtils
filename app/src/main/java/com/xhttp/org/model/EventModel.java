@@ -35,6 +35,13 @@ public class EventModel implements Parcelable{
     String applyPhone;//报名手机号
 
 
+    @Override
+    public String toString() {
+        return "EventModel{" +
+                "proName='" + proName + '\'' +
+                '}';
+    }
+
     public String getLinkType() {
         return linkType;
     }

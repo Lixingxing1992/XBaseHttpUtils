@@ -72,7 +72,7 @@ public class RequestUtil {
 
 
     public final synchronized byte[] request(String params, String urlPath) {
-        BaseErrorInfo errorInfo = new BaseErrorInfo();
+        BaseErrorInfo errorInfo = this.baseResult.errorInfo;
         try {
             URL url = new URL(urlPath);
             URLConnection connection = url.openConnection();
@@ -141,9 +141,8 @@ public class RequestUtil {
             else{
 
             }
-            errorInfo.requestException = e;
+            errorInfo.exception = e;
             errorInfo.errorMsg = errorInfo.getErrorMsg();
-            baseResult.errorInfo = errorInfo;
             e.printStackTrace();
         }
         return null;

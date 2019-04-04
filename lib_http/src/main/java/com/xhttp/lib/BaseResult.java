@@ -33,16 +33,50 @@ public class BaseResult {
     public boolean isResultParseSucess = false;
 
     // 错误信息描述
-    public BaseErrorInfo errorInfo;
+    public BaseErrorInfo errorInfo = new BaseErrorInfo();
 
     public Result result;
-    public <T>Result getResult(){
+    public Result getResult(){
         return result;
     }
-    public static class Result<T>{
-        public String result_str;
-        public T result_object;
-        public List<T> result_list = new ArrayList<>();
+    public static class Result{
+        // 全部返回值
+        public String resultAll;
+
+        // 解析出来需要处理的返回值
+        private Object result_object;
+        private List<Object> result_list = new ArrayList<>();
+        private String result_str;
+
+        public <T> T getResult_object() {
+            if(result_object != null){
+                return (T)result_object;
+            }
+            return null;
+        }
+
+        public void setResult_object(Object result_object) {
+            this.result_object = result_object;
+        }
+
+        public <T> List<T> getResult_list() {
+            if(result_list != null){
+                return (List<T>)result_list;
+            }
+            return null;
+        }
+
+        public void setResult_list(List<Object> result_list) {
+            this.result_list = result_list;
+        }
+
+        public String getResult_str() {
+            return result_str;
+        }
+
+        public void setResult_str(String result_str) {
+            this.result_str = result_str;
+        }
     }
 }
 

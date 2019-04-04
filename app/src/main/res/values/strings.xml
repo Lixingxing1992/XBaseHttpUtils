@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">框架DEMO</string>
+    <string name="app_name">BaseHttpUtils</string>
 
 
     <!-- 崩溃 -->

@@ -6,17 +6,11 @@ package com.xhttp.lib.config;
 public class BaseHttpConfig {
     public static final String TAG = "BaseHttpUtils";
 
-    public static final int HTTP_TYPE_POST = 0;
-    public static final int HTTP_TYPE_GET = 1;
-    public static final int HTTP_TYPE_POST_JSON = 2;
-    public static final int HTTP_TYPE_GET_JSON = 3;
-    public static final int HTTP_TYPE_POST_TANGDAO = 4;
-
-
     //错误类型
     public enum ErrorType {
+        Error_Use("框架使用错误"),
         Error_Request("服务器请求失败"),
-        Error_Data("返回值判断失败"),
+        Error_Data("返回值解析失败"),
         Error_Empty ("未获取到数据");
 
         private String msg = "";
@@ -32,6 +26,7 @@ public class BaseHttpConfig {
     //错误代码
     public enum ErrorCode {
         Error_Success("请求成功"),
+        Error_Use("调用方式错误,请仔细阅读使用说明"),
         Error_Params("因为程序原因导致参数传递错误"),
         Error_Unknow("未知错误导致请求失败"),
         Error_ResultErrorCode("网络请求返回码为 %s"),
@@ -39,7 +34,8 @@ public class BaseHttpConfig {
         Error_ResultExceptionTimeOut("服务器连接超时"),
         Error_ResultResponseNone("服务器返回结果为空,请联系系统管理员"),
         Error_HASNONEW("网络连接异常,请先检查您的网络配置"),
-        Error_Result_Parsr_error("后台程序返回值不符合格式要求"),
+        Error_Result_Parsr_error("后台返回值解析错误"),
+        Error_Result_Parsr_error1("后台返回值解析错误"),
         Error_Result_none("未获取到数据"),
         Error_Result_error("获取数据失败");
 

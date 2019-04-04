@@ -11,8 +11,6 @@ public class BaseHttpParams {
     public String url;
     // 参数
     public Object params;
-    // 数据解析类
-    public Class clz;
     // 请求方式
     public BaseHttpConfig.RequestType request_type = BaseHttpConfig.RequestType.POST;
 

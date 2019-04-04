@@ -49,18 +49,30 @@
                     android:text="none" />
 
             </RadioGroup>
-
-
-            <EditText
+            <GridLayout
                 android:id="@+id/params"
-                android:visibility="gone"
+                android:columnCount="1"
                 android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:layout_marginTop="10dp"
-                android:gravity="left"
-                android:hint="输入参数"
-                android:padding="5dp" />
-
+                android:layout_height="wrap_content">
+            </GridLayout>
+            <LinearLayout
+                android:id="@+id/paramsBtn"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <Button
+                    android:id="@+id/addParams"
+                    android:layout_margin="10dp"
+                    android:layout_width="100dp"
+                    android:layout_height="50dp"
+                    android:text="添加参数" />
+                <Button
+                    android:id="@+id/removeParams"
+                    android:layout_margin="10dp"
+                    android:layout_width="100dp"
+                    android:layout_height="50dp"
+                    android:text="删除参数" />
+            </LinearLayout>
             <Button
                 android:id="@+id/http"
                 android:layout_width="100dp"

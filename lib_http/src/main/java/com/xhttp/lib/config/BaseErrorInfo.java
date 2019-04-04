@@ -12,12 +12,12 @@ public class BaseErrorInfo {
     public String errorMsg = "这里有错误信息";
 
     // 异常
-    public Exception requestException;
+    public Exception exception;
 
     public String getErrorMsg(){
         // 有异常信息
-        if(requestException!=null){
-            return errorType.toString() + "," +errorCode.toString() + "\n" + requestException;
+        if(exception!=null){
+            return errorType.toString() + "," +errorCode.toString() + "\n" + exception;
         }
         return errorType.toString() + "," +errorCode.toString();
     }

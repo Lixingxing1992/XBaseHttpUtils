@@ -12,9 +12,8 @@ public interface IDataListener {
     void parse(BaseHttpParams baseHttpParams,BaseResult baseResult);
     // 检查数据是否失败  false 成功   true 解析失败
     boolean isFail(BaseHttpParams baseHttpParams,BaseResult baseResult);
-    // 获取错误信息 返回值不能为空,  返回的 BaseErrorInfo里必须要有
+    // 获取错误信息 返回值不能为空,  返回的 BaseErrorInfo里必须要有错误信息描述
     BaseErrorInfo getErrorInfo(BaseHttpParams baseHttpParams,BaseResult baseResult);
-
     // 检查是否为空数据  false 不为空  true空数据
     boolean isEmpty(BaseHttpParams baseHttpParams,BaseResult baseResult);
 }

@@ -147,7 +147,8 @@ class MainActivity : AppCompatActivity() {
                         for (view in listView) {
                             map.put((view.findViewById(R.id.keys) as EditText).text.toString(), (view.findViewById(R.id.values) as EditText).text.toString())
                         }
-                        BaseHttpUtils(waitingDialog).initUrl(url.text.toString())
+                        BaseHttpUtils(waitingDialog)
+                                .initUrl(url.text.toString())
                                 .initIHttpService(httpService)
                                 .initIDataListener(dataListener)
                                 .initParams(map)
@@ -172,7 +173,8 @@ class MainActivity : AppCompatActivity() {
                     }
                     // Get
                     R.id.radioButton2 -> {
-                        BaseHttpUtils(waitingDialog).initUrl(url.text.toString())
+                        BaseHttpUtils(waitingDialog)
+                                .initUrl(url.text.toString())
                                 .initIHttpService(httpService)
                                 .initIDataListener(dataListener)
                                 .initDialogDismiss(isDialogDismiss)

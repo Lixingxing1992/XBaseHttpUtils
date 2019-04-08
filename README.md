@@ -1,8 +1,10 @@
-###扩展性极强的网络请求框架
+# 扩展性极强的网络请求框架
 
-方便后期拓展
 
-###使用说明:
+
+
+
+## 使用说明:
 
 引用库:
 
@@ -105,9 +107,9 @@ BaseHttpUtils(waitingDialog)
         .get()
 ```
 
-​     
 
-###版本内容说明:
+
+## 版本内容说明:
 
 >1.0-beta2    请求工具类 实现了DefaultHttpService,JsonHttpService,TDHttpService；解析工具类实现了DefaultDataListener,JsonDataListener,TDDataListener.
 >

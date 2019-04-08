@@ -21,11 +21,11 @@ implementation ('com.github.Lixingxing1992:XHttpUtils:Tag'){
 ```java
     // 打开全局的log日志开关。
     // 这个方法会被 使用BaseHttpUtils().initOpenLog(boolean openLog)方法的地方覆盖掉，但是不影响在其他地方调用时候的log打印
-    static void init(boolean openLogs);
+    public static void init(boolean openLogs);
     // 设置全局的IHttpService 和 IDataListener, 默认是 DefaultHttpService 和 DefaultDataListener
     // 这个方法会被 使用BaseHttpUtils().initIHttpService(IHttpService iHttpService) 和 BaseHttpUtils().initIDataListener(IDataListener iDataListenerStatics)
     //      方法的地方覆盖掉，但是不影响在其他代码中的调用
-    static void init(IHttpService iHttpServiceStatics, IDataListener iDataListenerStatics) 
+    public static void init(Class iHttpServiceStatics, Class iDataListenerStatics);
 ```
 
  2.请求处理工具类: IHttpService 可以实现自己的IHttpService,只需要继承IHttpService并实现下面的方法
@@ -111,7 +111,7 @@ BaseHttpUtils(waitingDialog)
 
 ## 版本内容说明:
 
->1.0-beta3    请求工具类 实现了DefaultHttpService,JsonHttpService,TDHttpService；解析工具类实现了DefaultDataListener,JsonDataListener,TDDataListener.
+>1.0-beta4    请求工具类 实现了DefaultHttpService,JsonHttpService,TDHttpService；解析工具类实现了DefaultDataListener,JsonDataListener,TDDataListener.
 >
 >DefaultHttpService，DefaultDataListener 适用于普通post提交和get提交，200且返回值有值的时候直接获取到返回值。
 >

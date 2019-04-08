@@ -70,11 +70,11 @@ public final class BaseHttpUtils {
 
         if (iHttpServiceStatic == null) {
             // 默认
-            iHttpServiceStatic = new DefaultHttpService();
+            iHttpServiceStatic = DefaultHttpService.class;
         }
         if (iDataListenerStatic == null) {
             // 默认
-            iDataListenerStatic = new DefaultDataListener();
+            iDataListenerStatic = DefaultDataListener.class;
         }
     }
 
@@ -83,11 +83,14 @@ public final class BaseHttpUtils {
      * 全局的 请求工具类 iHttpServiceStatic 和 数据解析类 iDataListenerStatic
      * 会被 initIHttpService 和 initIDataListener中设置的值覆盖掉
      */
-    public static IHttpService iHttpServiceStatic;
-    public static IDataListener iDataListenerStatic;
+    public static Class iHttpServiceStatic;
+    public static Class iDataListenerStatic;
+
+    private IHttpService iHttpServiceCurr;
+    private IDataListener iDataListenerCurr;
 
     // 初始化设置 全局的 请求工具类 和 数据解析类
-    public static void init(IHttpService iHttpServiceStatics, IDataListener iDataListenerStatics) {
+    public static void init(Class iHttpServiceStatics, Class iDataListenerStatics) {
         iHttpServiceStatic = iHttpServiceStatics;
         iDataListenerStatic = iDataListenerStatics;
     }
@@ -350,13 +353,16 @@ public final class BaseHttpUtils {
         baseResult.errorInfo.errorType = BaseHttpConfig.ErrorType.Error_Use;
         baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
 
-        final IHttpService iHttpServiceCurr;
-        final IDataListener iDataListenerCurr;
-        // 获取当前的 数据请求工具类
-        iHttpServiceCurr = iHttpService == null ? iHttpServiceStatic : iHttpService;
-        // 获取当前的 数据解析工具类
-        iDataListenerCurr = iDataListener == null ? iDataListenerStatic : iDataListener;
-
+        try {
+            // 获取当前的 数据请求工具类
+            iHttpServiceCurr = iHttpService == null ? (IHttpService) (iHttpServiceStatic == null ? null : iHttpServiceStatic.newInstance()) : iHttpService;
+            // 获取当前的 数据解析工具类
+            iDataListenerCurr = iDataListener == null ? (IDataListener) (iDataListenerStatic == null ? null : iDataListenerStatic.newInstance())  : iDataListener;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        }
         // 检查调用方式是否正确
         if ((iHttpServiceCurr == null || iDataListenerCurr == null)) {
             if (baseHttpParams.openLog) {

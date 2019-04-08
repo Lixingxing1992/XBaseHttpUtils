@@ -87,6 +87,8 @@ public class TDHttpService implements IHttpService {
         new RequestUtil(baseHttpParams, baseResult)
                 .Request_ContentType(BaseHttpConfig.ParamType.JSON)
                 .Request_requestType(baseHttpParams.request_type)
+                .Reqeust_ConnectTimeOut(baseHttpParams.timeout_connect)
+                .Reqeust_ReadTimeOut(baseHttpParams.timeout_read)
                 .request((baseHttpParams.params == null ? "" : baseHttpParams.params.toString()), baseHttpParams.url);
     }
 

@@ -23,8 +23,8 @@ import java.util.UUID;
  */
 public class RequestUtil {
     private String successMsg = "";
-    private int timeOut = 10000;
-    private int connectTimeout = 8000;
+    public int timeOut = 12*1000;
+    public int connectTimeout = 12*1000;
     private String requestType = "";
     private String contentType = "";
     private final String BOUNDARY = UUID.randomUUID().toString();
@@ -69,6 +69,21 @@ public class RequestUtil {
         this.contentType = paramType;
         return this;
     }
+
+    /**
+     * 设置超时时间
+     * @param timeOut
+     * @return
+     */
+    public final RequestUtil Reqeust_ConnectTimeOut(int timeOut) {
+        this.connectTimeout = timeOut;
+        return this;
+    }
+    public final RequestUtil Reqeust_ReadTimeOut(int timeOut) {
+        this.timeOut = timeOut;
+        return this;
+    }
+
 
 
     public final synchronized byte[] request(String params, String urlPath) {

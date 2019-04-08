@@ -23,7 +23,6 @@
                 android:gravity="left"
                 android:hint="输入请求地址"
                 android:padding="5dp" />
-
             <RadioGroup
                 android:id="@+id/radio"
                 android:layout_width="match_parent"
@@ -73,6 +72,111 @@
                     android:layout_height="50dp"
                     android:text="删除参数" />
             </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:gravity="left"
+                android:text="选择是否显示dialog"
+                android:padding="5dp" />
+            <RadioGroup
+                android:id="@+id/radioDialog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/dialog1"
+                    android:checked="true"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="每次必定消失" />
+                <RadioButton
+                    android:id="@+id/dialog2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="成功时不消失" />
+
+                <RadioButton
+                    android:id="@+id/dialog3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="空数据时不消失" />
+
+                <RadioButton
+                    android:id="@+id/dialog4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="失败时不消失" />
+
+            </RadioGroup>
+
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:gravity="left"
+                android:text="选择工具类"
+                android:padding="5dp" />
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <RadioGroup
+                    android:id="@+id/radioService"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <RadioButton
+                        android:id="@+id/service1"
+                        android:checked="true"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="DefaultService" />
+
+                    <RadioButton
+                        android:id="@+id/service2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="JsonService" />
+
+                    <RadioButton
+                        android:id="@+id/service3"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="TDService" />
+
+                </RadioGroup>
+                <RadioGroup
+                    android:layout_marginLeft="15dp"
+                    android:id="@+id/radioData"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+
+                    <RadioButton
+                        android:id="@+id/data1"
+                        android:checked="true"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="DefaultDataListener" />
+
+                    <RadioButton
+                        android:id="@+id/data2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="JsonDataListener" />
+
+                    <RadioButton
+                        android:id="@+id/data3"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="TDDataListener" />
+
+                </RadioGroup>
+            </LinearLayout>
+
             <Button
                 android:id="@+id/http"
                 android:layout_width="100dp"
@@ -82,8 +186,8 @@
             <TextView
                 android:id="@+id/result"
                 android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:layout_marginTop="10dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
                 android:gravity="left"
                 android:hint="返回值"
                 android:padding="5dp" />

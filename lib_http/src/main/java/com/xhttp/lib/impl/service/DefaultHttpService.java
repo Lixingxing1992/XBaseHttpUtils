@@ -9,6 +9,11 @@ import com.xhttp.lib.config.BaseHttpParams;
 import com.xhttp.lib.interfaces.IHttpService;
 import com.xhttp.lib.util.RequestUtil;
 
+import org.json.JSONObject;
+
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Created by lixingxing on 2019/3/27.
  */
@@ -27,7 +32,13 @@ public class DefaultHttpService implements IHttpService {
             if(baseHttpParams.params instanceof Object[]){
                 Object[] p = (Object[]) baseHttpParams.params;
                 for (int i = 0; i < p.length; i+=2) {
-                    params =  p[i]+"="+p[i+1];
+                    params +=  "&" + p[i]+"="+p[i+1];
+                }
+            }else if(baseHttpParams.params instanceof Map){
+                Map p = (Map) baseHttpParams.params;
+                Set key =  p.keySet();
+                for (Object o : key) {
+                    params +=  "&" + o +"="+p.get(o);
                 }
             }else{
                 params = (String) baseHttpParams.params;
@@ -38,7 +49,7 @@ public class DefaultHttpService implements IHttpService {
                     baseHttpParams.request_type.toString() + "\n" +
                     baseResult.responseType.toString()+ "\n" +
                     baseHttpParams.url + "\n" +
-                    baseHttpParams.params);
+                    params);
         }
         return params;
     }
@@ -48,6 +59,8 @@ public class DefaultHttpService implements IHttpService {
         new RequestUtil(baseHttpParams, baseResult)
                 .Request_ContentType(BaseHttpConfig.ParamType.DEFAULT)
                 .Request_requestType(baseHttpParams.request_type)
+                .Reqeust_ConnectTimeOut(baseHttpParams.timeout_connect)
+                .Reqeust_ReadTimeOut(baseHttpParams.timeout_read)
                 .request((baseHttpParams.params == null ? "" : baseHttpParams.params.toString()), baseHttpParams.url);
     }
 

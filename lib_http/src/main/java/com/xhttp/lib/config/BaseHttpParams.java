@@ -14,5 +14,10 @@ public class BaseHttpParams {
     // 请求方式
     public BaseHttpConfig.RequestType request_type = BaseHttpConfig.RequestType.POST;
 
+    // 连接超时时间
+    public int timeout_connect = 12*1000;
+    // 读取数据超时时间
+    public int timeout_read = 12*1000;
+
     public boolean success;
 }

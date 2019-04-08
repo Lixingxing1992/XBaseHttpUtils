@@ -11,6 +11,9 @@ import com.xhttp.lib.interfaces.IHttpResultCallBack;
  */
 public abstract class HttpResultCallBack implements IHttpResultCallBack {
 
+    public HttpResultCallBack(){
+
+    }
 
     @Override
     public void onBeforeRequest(BaseHttpParams baseHttpParams) {
@@ -54,11 +57,9 @@ public abstract class HttpResultCallBack implements IHttpResultCallBack {
 
     @Override
     public void onFail(BaseErrorInfo errorInfo) {
-
     }
 
     @Override
     public void onFinal(BaseResult baseResult) {
-
     }
 }

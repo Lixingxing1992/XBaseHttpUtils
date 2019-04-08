@@ -1,5 +1,6 @@
 package com.xhttp.lib;
 
+import android.app.Dialog;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -55,7 +56,12 @@ public final class BaseHttpUtils {
         this(new BaseHttpParams());
     }
 
-    public BaseHttpUtils(BaseHttpParams baseHttpParams) {
+    public BaseHttpUtils(Dialog dialog) {
+        this(new BaseHttpParams());
+        this.dialog = dialog;
+    }
+
+    private BaseHttpUtils(BaseHttpParams baseHttpParams) {
         this.baseHttpParams = baseHttpParams;
         this.baseResult = new BaseResult();
 
@@ -170,6 +176,26 @@ public final class BaseHttpUtils {
         return this;
     }
 
+    /**
+     * 设置超时时间
+     * @param timeOut
+     * @return
+     */
+    public BaseHttpUtils initConnectTimeOut(int timeOut){
+        baseHttpParams.timeout_connect = timeOut;
+        return this;
+    }
+    public BaseHttpUtils initReadTimeOut(int timeOut){
+        baseHttpParams.timeout_read = timeOut;
+        return this;
+    }
+    public BaseHttpUtils initTimeOut(int timeOut){
+        baseHttpParams.timeout_connect = timeOut;
+        baseHttpParams.timeout_read = timeOut;
+        return this;
+    }
+
+
     /************************返回值********************************/
 
     /**
@@ -205,12 +231,77 @@ public final class BaseHttpUtils {
 //        this.baseHttpCallBack = iHttpCallBack;
 //        return this;
 //    }
-    IHttpResultCallBack iResultCallBack;
 
+    /************************ 其他设置 ********************************/
+
+    /**
+     * 请求回调
+     */
+    IHttpResultCallBack iResultCallBack;
     public BaseHttpUtils initHttpResultCallBack(IHttpResultCallBack iResultCallBack) {
         this.iResultCallBack = iResultCallBack;
         return this;
     }
+
+    /**
+     * 设置加载提示框
+     * @param dialog
+     * @return
+     */
+    Dialog dialog;
+    public BaseHttpUtils initDialog(Dialog dialog){
+        this.dialog = dialog;
+        return this;
+    }
+
+    /**
+     * 设置 dialog是否消失 默认最后必须消失
+     * @param isDialogDismiss
+     * @return
+     */
+    boolean isDialogDismiss = true;
+    public BaseHttpUtils initDialogDismiss(boolean isDialogDismiss){
+        this.isDialogDismiss = isDialogDismiss;
+        return this;
+    }
+    /**
+     * 设置 dialog请求成功时是否消失 默认最后必须消失
+     * @param isDialogDismiss
+     * @return
+     */
+    boolean isDialogDismissWhenSuccess = true;
+    public BaseHttpUtils initDialogDismissWhenSuccess(boolean isDialogDismissWhenSuccess){
+        this.isDialogDismissWhenSuccess = isDialogDismissWhenSuccess;
+        return this;
+    }
+    /**
+     * 设置 dialog请求结果是空数据是否消失 默认最后必须消失
+     * @param isDialogDismiss
+     * @return
+     */
+    boolean isDialogDismissWhenEmpty = true;
+    public BaseHttpUtils initDialogDismissWhenEmpty(boolean isDialogDismissWhenEmpty){
+        this.isDialogDismissWhenEmpty = isDialogDismissWhenEmpty;
+        return this;
+    }
+    /**
+     * 设置 dialog请求失败时是否消失 默认最后必须消失
+     * @param isDialogDismiss
+     * @return
+     */
+    boolean isDialogDismissWhenFail = true;
+    public BaseHttpUtils initDialogDismissWhenFail(boolean isDialogDismissWhenFail){
+        this.isDialogDismissWhenFail = isDialogDismissWhenFail;
+        return this;
+    }
+
+    public BaseHttpUtils dismissDialog() {
+        if (null != dialog && dialog.isShowing()) {
+            dialog.dismiss();
+        }
+        return this;
+    }
+
 
     /**
      * 发送请求
@@ -274,6 +365,9 @@ public final class BaseHttpUtils {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    if(isDialogDismiss && isDialogDismissWhenFail){
+                        dismissDialog();
+                    }
                     if (iResultCallBack != null) {
                         baseResult.errorInfo.errorMsg = "请先初始化设置好请求和解析工具类";
                         iResultCallBack.onFailUse(baseResult.errorInfo);
@@ -290,6 +384,9 @@ public final class BaseHttpUtils {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    if(isDialogDismiss && isDialogDismissWhenFail){
+                        dismissDialog();
+                    }
                     if (iResultCallBack != null) {
                         baseResult.errorInfo.errorMsg = "url不能为空";
                         iResultCallBack.onFailUse(baseResult.errorInfo);
@@ -327,7 +424,6 @@ public final class BaseHttpUtils {
                 if (baseHttpParams.openLog) {
                     Log.e(BaseHttpConfig.TAG, tags + ": getErrorInfo方法中 BaseErrorInfo不能为空");
                 }
-                return;
             } else {
                 if (baseHttpParams.openLog) {
                     Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ": " + baseResult.errorInfo.errorMsg);
@@ -337,9 +433,20 @@ public final class BaseHttpUtils {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    if(isDialogDismiss && isDialogDismissWhenFail){
+                        dismissDialog();
+                    }
                     if (iResultCallBack != null) {
-                        iResultCallBack.onFailRequest(baseErrorInfo);
-                        iResultCallBack.onFail(baseErrorInfo);
+                        BaseErrorInfo baseErrorInfos = baseErrorInfo;
+                        if(baseErrorInfos == null){
+                            baseErrorInfos = new BaseErrorInfo();
+                            baseErrorInfos.errorType = BaseHttpConfig.ErrorType.Error_Use;
+                            baseErrorInfos.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
+                            baseErrorInfos.errorMsg = "getErrorInfo方法中 BaseErrorInfo不能为空";
+                        }
+                        baseResult.errorInfo = baseErrorInfos;
+                        iResultCallBack.onFailRequest(baseErrorInfos);
+                        iResultCallBack.onFail(baseErrorInfos);
                         iResultCallBack.onFinal(baseResult);
                     }
                 }
@@ -368,7 +475,6 @@ public final class BaseHttpUtils {
                 if (baseHttpParams.openLog) {
                     Log.e(BaseHttpConfig.TAG, tags + ": getErrorInfo方法中 BaseErrorInfo不能为空");
                 }
-                return;
             } else {
                 if (baseHttpParams.openLog) {
                     Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ": " + baseResult.errorInfo.errorMsg);
@@ -378,7 +484,17 @@ public final class BaseHttpUtils {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    if(isDialogDismiss && isDialogDismissWhenFail){
+                        dismissDialog();
+                    }
                     if (iResultCallBack != null) {
+                        BaseErrorInfo baseErrorInfos = baseErrorInfo;
+                        if(baseErrorInfos == null){
+                            baseErrorInfos = new BaseErrorInfo();
+                            baseErrorInfos.errorType = BaseHttpConfig.ErrorType.Error_Use;
+                            baseErrorInfos.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
+                            baseErrorInfos.errorMsg = "getErrorInfo方法中 BaseErrorInfo不能为空";
+                        }
                         iResultCallBack.onFail(baseErrorInfo);
                         iResultCallBack.onFinal(baseResult);
                     }
@@ -392,7 +508,6 @@ public final class BaseHttpUtils {
                 if (baseHttpParams.openLog) {
                     Log.e(BaseHttpConfig.TAG, tags + ": getErrorInfo方法中 BaseErrorInfo不能为空");
                 }
-                return;
             } else {
                 if (baseHttpParams.openLog) {
                     Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ": " + baseResult.errorInfo.errorMsg);
@@ -402,7 +517,17 @@ public final class BaseHttpUtils {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    if(isDialogDismiss && isDialogDismissWhenEmpty){
+                        dismissDialog();
+                    }
                     if (iResultCallBack != null) {
+                        BaseErrorInfo baseErrorInfos = baseErrorInfo;
+                        if(baseErrorInfos == null){
+                            baseErrorInfos = new BaseErrorInfo();
+                            baseErrorInfos.errorType = BaseHttpConfig.ErrorType.Error_Use;
+                            baseErrorInfos.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
+                            baseErrorInfos.errorMsg = "getErrorInfo方法中 BaseErrorInfo不能为空";
+                        }
                         iResultCallBack.onEmpty(baseErrorInfo);
                         iResultCallBack.onFinal(baseResult);
                     }
@@ -416,12 +541,22 @@ public final class BaseHttpUtils {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                if (iResultCallBack != null) {
-                    if (baseResult.success) {
+                if (baseResult.success) {
+                    if(isDialogDismiss && isDialogDismissWhenSuccess){
+                        dismissDialog();
+                    }
+                    if (iResultCallBack != null) {
                         iResultCallBack.onSuccess(baseResult);
-                    } else {
+                    }
+                } else {
+                    if(isDialogDismiss && isDialogDismissWhenFail){
+                        dismissDialog();
+                    }
+                    if (iResultCallBack != null) {
                         iResultCallBack.onFail(baseResult.errorInfo);
                     }
+                }
+                if (iResultCallBack != null) {
                     iResultCallBack.onFinal(baseResult);
                 }
             }

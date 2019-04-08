@@ -20,7 +20,8 @@ import static com.xhttp.lib.config.BaseHttpConfig.TAG;
  * Created by lixingxing on 2019/4/2.
  */
 public class TDDataListener implements IDataListener {
-    // 设置正确判断
+
+    // 设置成功返回码
     public String successCode = "0";
 
     public TDDataListener setSuccessCode(String successCode) {
@@ -28,11 +29,18 @@ public class TDDataListener implements IDataListener {
         return this;
     }
 
-    // 设置空判断
+    // 设置空判断返回码
     public String emptyCode = "10007";
 
     public TDDataListener setEmptyCode(String emptyCode) {
         this.emptyCode = emptyCode;
+        return this;
+    }
+
+    // 解析标识
+    public String[] resultCode = new String[]{};
+    public TDDataListener setResultCode(String... resultCodes){
+        this.resultCode = resultCodes;
         return this;
     }
 
@@ -55,8 +63,18 @@ public class TDDataListener implements IDataListener {
                 jsonObject = new JSONObject(result.resultAll);
                 resCode = jsonObject.optString("resCode");
                 resMsg = jsonObject.optString("resMsg");
-                dataResult = jsonObject.optString("data");
+                try{
+                    dataResult = jsonObject.optString("data");
+                }catch (Exception e){
+                    dataResult = "";
+                }
                 if(successCode.equals(resCode)){
+                    if(resultCode != null && resultCode.length > 0 && !"".equals(dataResult)){
+                        for (String s : resultCode) {
+                            dataResult = new JSONObject(dataResult).optString(s);
+                        }
+                    }
+                    result.setResult_str(dataResult);
                     switch (baseResult.responseType) {
                         case List:{
                             if(baseResult.aClass == null){

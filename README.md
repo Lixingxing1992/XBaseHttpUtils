@@ -111,7 +111,7 @@ BaseHttpUtils(waitingDialog)
 
 ## 版本内容说明:
 
->1.0-beta2    请求工具类 实现了DefaultHttpService,JsonHttpService,TDHttpService；解析工具类实现了DefaultDataListener,JsonDataListener,TDDataListener.
+>1.0-beta3    请求工具类 实现了DefaultHttpService,JsonHttpService,TDHttpService；解析工具类实现了DefaultDataListener,JsonDataListener,TDDataListener.
 >
 >DefaultHttpService，DefaultDataListener 适用于普通post提交和get提交，200且返回值有值的时候直接获取到返回值。
 >

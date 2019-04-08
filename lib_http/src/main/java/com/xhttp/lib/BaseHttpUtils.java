@@ -8,7 +8,6 @@ import android.util.Log;
 import com.xhttp.lib.config.BaseErrorInfo;
 import com.xhttp.lib.config.BaseHttpConfig;
 import com.xhttp.lib.config.BaseHttpParams;
-import com.xhttp.lib.exceptions.BaseHttpUtilsError;
 import com.xhttp.lib.impl.data.DefaultDataListener;
 import com.xhttp.lib.interfaces.IDataListener;
 import com.xhttp.lib.interfaces.IHttpService;

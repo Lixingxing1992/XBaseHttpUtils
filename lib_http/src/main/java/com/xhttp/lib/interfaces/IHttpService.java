@@ -28,7 +28,6 @@ public interface IHttpService {
      *      baseResult.errorInfo != null  &&  baseResult.errorInfo.e != null
      * @param baseHttpParams
      * @param baseResult
-     * @return
      */
     void request(BaseHttpParams baseHttpParams,BaseResult baseResult);
 

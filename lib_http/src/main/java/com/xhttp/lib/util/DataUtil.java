@@ -22,15 +22,19 @@ public class DataUtil {
     public static <T> List<T> parseJsonToList(String jsonString, Class<T> clz){
         List<T> list = new ArrayList<>();
         JsonParser parser = new JsonParser();
-        JsonArray Jarray = (JsonArray) parser.parse(jsonString);
-        for (JsonElement jsonElement : Jarray) {
-            T t = parseJsonToObject(jsonElement.toString(),clz);
-            if(t == null){
-                list = null;
-                break;
-            }else{
-                list.add(t);
+        try {
+            JsonArray Jarray = (JsonArray) parser.parse(jsonString);
+            for (JsonElement jsonElement : Jarray) {
+                T t = parseJsonToObject(jsonElement.toString(),clz);
+                if(t == null){
+                    list = null;
+                    break;
+                }else{
+                    list.add(t);
+                }
             }
+        }catch (Exception e){
+            list = null;
         }
         return list;
     }

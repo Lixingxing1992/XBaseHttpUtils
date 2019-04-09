@@ -38,6 +38,11 @@ class MainActivity : AppCompatActivity() {
     var isDialogDismissWhenEmpty = true
     var isDialogDismissWhenFail = true
 
+    var isShow = true
+    var isShowError = true
+    var isShowEmpty = true
+    var isShowSuccess = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -136,6 +141,43 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        radioShow.setOnCheckedChangeListener { radioGroup, i ->
+            when (i) {
+                R.id.show1 -> {
+                    isShow = true
+                    isShowError = true
+                    isShowEmpty = true
+                    isShowSuccess = false
+                }
+                R.id.show2 -> {
+                    isShow = true
+                    isShowError = false
+                    isShowEmpty = true
+                    isShowSuccess = false
+                }
+                R.id.show3 ->{
+                    isShow = true
+                    isShowError = true
+                    isShowEmpty = false
+                    isShowSuccess = false
+                }
+                R.id.show4 ->{
+                    isShow = true
+                    isShowError = true
+                    isShowEmpty = true
+                    isShowSuccess = true
+                }
+                R.id.show5 ->{
+                    isShow = false
+                    isShowError = true
+                    isShowEmpty = true
+                    isShowSuccess = true
+                }
+            }
+        }
+
+
         http.setOnClickListener {
             waitingDialog.show()
             result.text = ""
@@ -158,6 +200,10 @@ class MainActivity : AppCompatActivity() {
                                 .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
                                 .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
                                 .initDialogDismissWhenFail(isDialogDismissWhenFail)
+                                .initShowMessage(isShow)
+                                .initShowErrorMessage(isShowError)
+                                .initShowEmptyMessage(isShowEmpty)
+                                .initShowSuccessMessage(isShowSuccess)
                                 .initHttpResultCallBack(object : HttpResultCallBack() {
                                     override fun onSuccess(baseResult: BaseResult) {
                                         result.text = baseResult.getResult().result_str
@@ -181,6 +227,10 @@ class MainActivity : AppCompatActivity() {
                                 .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
                                 .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
                                 .initDialogDismissWhenFail(isDialogDismissWhenFail)
+                                .initShowMessage(isShow)
+                                .initShowErrorMessage(isShowError)
+                                .initShowEmptyMessage(isShowEmpty)
+                                .initShowSuccessMessage(isShowSuccess)
                                 .initHttpResultCallBack(object : HttpResultCallBack() {
                                     override fun onSuccess(baseResult: BaseResult) {
                                         var resultStr = baseResult.getResult().result_str
@@ -221,8 +271,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    var postHttpUrl = "https://emap.yuyuantm.com.cn/yuyuan-scenery/scenery/getRecommendScenery"//"http://wechat.hlwmall.com:8080/huilinwan/api/activity/getActivityList"
+    var postHttpUrl = "http://wechat.hlwmall.com:8080/huilinwan/api/activity/getActivityList"//"https://emap.yuyuantm.com.cn/yuyuan-scenery/scenery/getRecommendScenery"//
     var getHttpUrl = "http://103.10.3.77:59527/yuyuan-resource/user/randPage/261/30"
     var paramsStr = ""
-    var map = mapOf("returnType" to "CN")//mapOf("cardCode" to "17101309000670", "page" to 1, "size" to 30)
+    var map = mapOf("cardCode" to "17101309000670", "page" to 1, "size" to 30)//mapOf("returnType" to "CN")//
 }

@@ -1,6 +1,7 @@
 package com.xhttp.lib;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -9,10 +10,12 @@ import com.xhttp.lib.config.BaseErrorInfo;
 import com.xhttp.lib.config.BaseHttpConfig;
 import com.xhttp.lib.config.BaseHttpParams;
 import com.xhttp.lib.impl.data.DefaultDataListener;
+import com.xhttp.lib.impl.message.MessageManager;
 import com.xhttp.lib.interfaces.IDataListener;
 import com.xhttp.lib.interfaces.IHttpService;
 import com.xhttp.lib.interfaces.IHttpResultCallBack;
 import com.xhttp.lib.impl.service.DefaultHttpService;
+import com.xhttp.lib.interfaces.IMessageManager;
 import com.xhttp.lib.util.BaseThreadPoolUtil;
 
 import java.util.Map;
@@ -24,10 +27,13 @@ public final class BaseHttpUtils {
     // 唯一标识
     private String tags = "";
 
+    private static Context contextStatic;
+
     // 是否打开Log日志
     private static boolean openLogStatic = true;
 
-    public static void init(boolean openLogs) {
+    public static void init(Context context,boolean openLogs) {
+        contextStatic = context;
         openLogStatic = openLogs;
     }
 
@@ -61,6 +67,9 @@ public final class BaseHttpUtils {
     }
 
     private BaseHttpUtils(BaseHttpParams baseHttpParams) {
+        if(contextStatic == null){
+            throw new RuntimeException("请在application中调用init(Context context,boolean openLogs)方法，并且context!=null");
+        }
         this.baseHttpParams = baseHttpParams;
         this.baseResult = new BaseResult();
 
@@ -74,6 +83,10 @@ public final class BaseHttpUtils {
         if (iDataListenerStatic == null) {
             // 默认
             iDataListenerStatic = DefaultDataListener.class;
+        }
+        if(iMessageManagerStatic == null){
+            // 默认
+            iMessageManagerStatic = MessageManager.class;
         }
     }
 
@@ -250,6 +263,61 @@ public final class BaseHttpUtils {
     }
 
     /**
+     * 请求回调提示语句工具类
+     */
+    static Class iMessageManagerStatic;
+    public static void init(Class iMessageManagerStatics) {
+        if(iMessageManagerStatics.getSuperclass().getName().equals(IMessageManager.class.getName())){
+            iMessageManagerStatic = iMessageManagerStatics;
+        }else{
+            throw new RuntimeException("初始化提示语句工具类时类型错误");
+        }
+    }
+    IMessageManager iMessageManager;
+    public BaseHttpUtils initIMessageManager(IMessageManager iMessageManager){
+        this.iMessageManager = iMessageManager;
+        return this;
+    }
+
+    /**
+     * 设置是否显示提示语句 默认显示
+     */
+    boolean isShowMessage = true;
+    public BaseHttpUtils initShowMessage(boolean isShowMessage){
+        this.isShowMessage = isShowMessage;
+        return this;
+    }
+    /**
+     * 设置是否显示错误时提示语句 默认显示
+     */
+    boolean isShowErrorMessage = true;
+    public BaseHttpUtils initShowErrorMessage(boolean isShowErrorMessage){
+        this.isShowErrorMessage = isShowErrorMessage;
+        return this;
+    }
+    /**
+     * 设置是否显示空数据时提示语句 默认显示
+     */
+    boolean isShowEmptyMessage = true;
+    public BaseHttpUtils initShowEmptyMessage(boolean isShowEmptyMessage){
+        this.isShowEmptyMessage = isShowEmptyMessage;
+        return this;
+    }
+    /**
+     * 设置是否显示正确时提示语句 默认不显示
+     */
+    boolean isShowSuccessMessage = false;
+    public BaseHttpUtils initShowSuccessMessage(boolean isShowSuccessMessage){
+        this.isShowSuccessMessage = isShowSuccessMessage;
+        return this;
+    }
+    String successMsg = "请求成功";
+    public BaseHttpUtils initSuccessMsg(String successMsg){
+        this.successMsg = successMsg;
+        return this;
+    }
+
+    /**
      * 设置加载提示框
      * @param dialog
      */
@@ -336,7 +404,17 @@ public final class BaseHttpUtils {
 
     private void requests() {
         baseHttpParams.openLog = checkLog();
-
+        if(iResultCallBack == null){
+            iMessageManager = null;
+        }else{
+            try {
+                iMessageManager = iMessageManager == null? (IMessageManager) iMessageManagerStatic.newInstance() :iMessageManager;
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            }
+        }
         mHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -374,6 +452,9 @@ public final class BaseHttpUtils {
                     }
                     if (iResultCallBack != null) {
                         baseResult.errorInfo.errorMsg = "请先初始化设置好请求和解析工具类";
+                        if(iMessageManager != null && isShowMessage && isShowErrorMessage){
+                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                        }
                         iResultCallBack.onFailUse(baseResult.errorInfo);
                         iResultCallBack.onFail(baseResult.errorInfo);
                         iResultCallBack.onFinal(baseResult);
@@ -393,6 +474,9 @@ public final class BaseHttpUtils {
                     }
                     if (iResultCallBack != null) {
                         baseResult.errorInfo.errorMsg = "url不能为空";
+                        if(iMessageManager != null && isShowMessage && isShowErrorMessage){
+                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                        }
                         iResultCallBack.onFailUse(baseResult.errorInfo);
                         iResultCallBack.onFail(baseResult.errorInfo);
                         iResultCallBack.onFinal(baseResult);
@@ -449,6 +533,9 @@ public final class BaseHttpUtils {
                             baseErrorInfos.errorMsg = "getErrorInfo方法中 BaseErrorInfo不能为空";
                         }
                         baseResult.errorInfo = baseErrorInfos;
+                        if(iMessageManager != null && isShowMessage && isShowErrorMessage){
+                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                        }
                         iResultCallBack.onFailRequest(baseErrorInfos);
                         iResultCallBack.onFail(baseErrorInfos);
                         iResultCallBack.onFinal(baseResult);
@@ -499,6 +586,10 @@ public final class BaseHttpUtils {
                             baseErrorInfos.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
                             baseErrorInfos.errorMsg = "getErrorInfo方法中 BaseErrorInfo不能为空";
                         }
+                        baseResult.errorInfo = baseErrorInfos;
+                        if(iMessageManager != null && isShowMessage && isShowErrorMessage){
+                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                        }
                         iResultCallBack.onFail(baseErrorInfo);
                         iResultCallBack.onFinal(baseResult);
                     }
@@ -532,6 +623,10 @@ public final class BaseHttpUtils {
                             baseErrorInfos.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
                             baseErrorInfos.errorMsg = "getErrorInfo方法中 BaseErrorInfo不能为空";
                         }
+                        baseResult.errorInfo = baseErrorInfos;
+                        if(iMessageManager != null && isShowMessage && isShowEmptyMessage){
+                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                        }
                         iResultCallBack.onEmpty(baseErrorInfo);
                         iResultCallBack.onFinal(baseResult);
                     }
@@ -550,6 +645,11 @@ public final class BaseHttpUtils {
                         dismissDialog();
                     }
                     if (iResultCallBack != null) {
+                        if(iMessageManager != null && isShowMessage && isShowSuccessMessage){
+                            if(!"".equals(successMsg) && null != successMsg){
+                                iMessageManager.showMessage(contextStatic,successMsg);
+                            }
+                        }
                         iResultCallBack.onSuccess(baseResult);
                     }
                 } else {
@@ -557,6 +657,9 @@ public final class BaseHttpUtils {
                         dismissDialog();
                     }
                     if (iResultCallBack != null) {
+                        if(iMessageManager != null && isShowMessage && isShowErrorMessage){
+                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                        }
                         iResultCallBack.onFail(baseResult.errorInfo);
                     }
                 }

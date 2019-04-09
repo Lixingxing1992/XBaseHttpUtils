@@ -111,6 +111,47 @@
 
             </RadioGroup>
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:gravity="left"
+                android:text="选择是否显示提示语句"
+                android:padding="5dp" />
+            <RadioGroup
+                android:id="@+id/radioShow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/show1"
+                    android:checked="true"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="成功时不显示" />
+                <RadioButton
+                    android:id="@+id/show2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="失败时不显示" />
+
+                <RadioButton
+                    android:id="@+id/show3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="空数据时不显示" />
+                <RadioButton
+                    android:id="@+id/show4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="任何时候都显示" />
+                <RadioButton
+                    android:id="@+id/show5"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="永远不显示" />
+
+            </RadioGroup>
 
             <TextView
                 android:layout_width="match_parent"

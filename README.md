@@ -19,13 +19,17 @@ implementation ('com.github.Lixingxing1992:XHttpUtils:Tag'){
  1.在Application中初始化：
     
 ```java
-    // 打开全局的log日志开关。
+    // 必须初始化这个方法 设置上下文和设置是否打开全局的log日志开关。
     // 这个方法会被 使用BaseHttpUtils().initOpenLog(boolean openLog)方法的地方覆盖掉，但是不影响在其他地方调用时候的log打印
-    public static void init(boolean openLogs);
+    public static void init(Context context，boolean openLogs);
+    
     // 设置全局的IHttpService 和 IDataListener, 默认是 DefaultHttpService 和 DefaultDataListener
     // 这个方法会被 使用BaseHttpUtils().initIHttpService(IHttpService iHttpService) 和 BaseHttpUtils().initIDataListener(IDataListener iDataListenerStatics)
     //      方法的地方覆盖掉，但是不影响在其他代码中的调用
     public static void init(Class iHttpServiceStatics, Class iDataListenerStatics);
+    
+    // 设置全局的 IMessageManager 默认是MessageManager
+    public static void init(Class iMessageManagerStatics);
 ```
 
  2.请求处理工具类: IHttpService 可以实现自己的IHttpService,只需要继承IHttpService并实现下面的方法
@@ -126,3 +130,11 @@ BaseHttpUtils(waitingDialog)
 >YGHttpService  是试用于 我们公司项目 豫园中的请求方式,继承TDHttpService,重写了parseParams方法
 >修改了 (设置返回值的解析模式) initResponseType 方法 
 >       为 initDataParseType,参数从BaseHttpConfig.ResponseType 修改成 BaseHttpConfig.DataParseType
+
+1.0-beta7
+>
+>init(Context context,boolean isOpenLog) 为必须调用的方法
+>API中新增 提示语句处理方法,具体点击上面的链接查看
+>新增IMessageManager,用于处理提示信息
+>
+>

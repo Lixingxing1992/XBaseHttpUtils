@@ -47,7 +47,7 @@ public class DefaultHttpService implements IHttpService {
         if (baseHttpParams.openLog) {
             Log.e("BaseHttpUtils", baseHttpParams.tags + ":\n" +
                     baseHttpParams.request_type.toString() + "\n" +
-                    baseResult.responseType.toString()+ "\n" +
+                    baseResult.dataParseType.toString()+ "\n" +
                     baseHttpParams.url + "\n" +
                     params);
         }

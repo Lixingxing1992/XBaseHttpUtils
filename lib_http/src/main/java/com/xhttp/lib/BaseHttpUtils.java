@@ -90,8 +90,13 @@ public final class BaseHttpUtils {
 
     // 初始化设置 全局的 请求工具类 和 数据解析类
     public static void init(Class iHttpServiceStatics, Class iDataListenerStatics) {
-        iHttpServiceStatic = iHttpServiceStatics;
-        iDataListenerStatic = iDataListenerStatics;
+        if(iHttpServiceStatics.getSuperclass().getName().equals(IHttpService.class.getName())
+                &&(iDataListenerStatics.getSuperclass().getName().equals(IDataListener.class.getName()))){
+            iHttpServiceStatic = iHttpServiceStatics;
+            iDataListenerStatic = iDataListenerStatics;
+        }else{
+            throw new RuntimeException("初始化请求工具类和数据解析类时类型错误");
+        }
     }
 
     /**
@@ -119,7 +124,6 @@ public final class BaseHttpUtils {
      * 设置请求路径 url
      *
      * @param url
-     * @return
      */
     public BaseHttpUtils initUrl(String url) {
         baseHttpParams.url = url;
@@ -133,7 +137,7 @@ public final class BaseHttpUtils {
      * initParams(key,value,key,value....)
      *
      * @param params
-     * @return
+     
      */
     public BaseHttpUtils initParams(Object... params) {
         baseHttpParams.params = params;
@@ -145,7 +149,7 @@ public final class BaseHttpUtils {
      * key=value&key=value
      *
      * @param params
-     * @return
+     
      */
     public BaseHttpUtils initParams(String params) {
         baseHttpParams.params = params;
@@ -157,7 +161,7 @@ public final class BaseHttpUtils {
      * Map参数
      *
      * @param params
-     * @return
+     
      */
     public BaseHttpUtils initParams(Map params) {
         baseHttpParams.params = params;
@@ -171,7 +175,7 @@ public final class BaseHttpUtils {
      * 设置请求方式 RequestType   post  get ...
      *
      * @param type
-     * @return
+     
      */
     public BaseHttpUtils initRequestType(BaseHttpConfig.RequestType type) {
         baseHttpParams.request_type = type;
@@ -181,7 +185,7 @@ public final class BaseHttpUtils {
     /**
      * 设置超时时间
      * @param timeOut
-     * @return
+     
      */
     public BaseHttpUtils initConnectTimeOut(int timeOut){
         baseHttpParams.timeout_connect = timeOut;
@@ -203,11 +207,11 @@ public final class BaseHttpUtils {
     /**
      * 设置返回值 解析模式
      *
-     * @param responseType
-     * @return
+     * @param dataParseType
+     
      */
-    public BaseHttpUtils initResponseType(BaseHttpConfig.ResponseType responseType) {
-        baseResult.responseType = responseType;
+    public BaseHttpUtils initDataParseType(BaseHttpConfig.DataParseType dataParseType) {
+        baseResult.dataParseType = dataParseType;
         return this;
     }
 
@@ -215,7 +219,7 @@ public final class BaseHttpUtils {
      * 设置返回值 解析类型
      *
      * @param tClass
-     * @return
+     
      */
     public BaseHttpUtils initClass(Class tClass) {
         baseResult.aClass = tClass;
@@ -248,7 +252,6 @@ public final class BaseHttpUtils {
     /**
      * 设置加载提示框
      * @param dialog
-     * @return
      */
     Dialog dialog;
     public BaseHttpUtils initDialog(Dialog dialog){
@@ -259,7 +262,6 @@ public final class BaseHttpUtils {
     /**
      * 设置 dialog是否消失 默认最后必须消失
      * @param isDialogDismiss
-     * @return
      */
     boolean isDialogDismiss = true;
     public BaseHttpUtils initDialogDismiss(boolean isDialogDismiss){
@@ -269,7 +271,6 @@ public final class BaseHttpUtils {
     /**
      * 设置 dialog请求成功时是否消失 默认最后必须消失
      * @param isDialogDismiss
-     * @return
      */
     boolean isDialogDismissWhenSuccess = true;
     public BaseHttpUtils initDialogDismissWhenSuccess(boolean isDialogDismissWhenSuccess){
@@ -279,7 +280,6 @@ public final class BaseHttpUtils {
     /**
      * 设置 dialog请求结果是空数据是否消失 默认最后必须消失
      * @param isDialogDismiss
-     * @return
      */
     boolean isDialogDismissWhenEmpty = true;
     public BaseHttpUtils initDialogDismissWhenEmpty(boolean isDialogDismissWhenEmpty){
@@ -289,7 +289,6 @@ public final class BaseHttpUtils {
     /**
      * 设置 dialog请求失败时是否消失 默认最后必须消失
      * @param isDialogDismiss
-     * @return
      */
     boolean isDialogDismissWhenFail = true;
     public BaseHttpUtils initDialogDismissWhenFail(boolean isDialogDismissWhenFail){

@@ -3,6 +3,10 @@ package com.xhttp.org;
 import android.app.Application;
 import android.content.Context;
 
+import com.xhttp.lib.BaseHttpUtils;
+import com.xhttp.lib.impl.data.TDDataListener;
+import com.xhttp.lib.impl.service.TDHttpService;
+
 import org.acra.ACRA;
 import org.acra.collector.CrashReportData;
 import org.acra.sender.EmailIntentSender;
@@ -21,8 +25,6 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-
-
     }
 
 }

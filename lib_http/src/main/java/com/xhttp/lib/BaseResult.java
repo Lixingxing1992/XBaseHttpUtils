@@ -15,7 +15,8 @@ public class BaseResult {
     // 返回值解析类型
     public Class aClass;
     // 返回值解析模式 默认是String
-    public BaseHttpConfig.ResponseType responseType = BaseHttpConfig.ResponseType.String;
+    public BaseHttpConfig.DataParseType dataParseType = BaseHttpConfig.DataParseType.String;
+
 
     // 错误类型:  请求失败  解析失败  返回值提示失败
 //    public BaseHttpConfig.ErrorType errorType = BaseHttpConfig.ErrorType.Error_Request;

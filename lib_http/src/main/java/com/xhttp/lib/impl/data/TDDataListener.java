@@ -75,7 +75,7 @@ public class TDDataListener implements IDataListener {
                         }
                     }
                     result.setResult_str(dataResult);
-                    switch (baseResult.responseType) {
+                    switch (baseResult.dataParseType) {
                         case List:{
                             if(baseResult.aClass == null){
                                 baseResult.errorInfo.errorMsg = "没有设置返回值解析类型";
@@ -141,7 +141,7 @@ public class TDDataListener implements IDataListener {
             return true;
         }else if (baseResult.isRequestSuccess && baseResult.isResultParseSucess && successCode.equals(resCode)
                 ) {
-            if(baseResult.responseType == BaseHttpConfig.ResponseType.List
+            if(baseResult.dataParseType == BaseHttpConfig.DataParseType.List
                     && baseResult.result.getResult_list().isEmpty()){
                 return true;
             }

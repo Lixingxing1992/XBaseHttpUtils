@@ -45,7 +45,6 @@ public class RequestUtil {
     /**
      * 设置请求提交方式
      * @param paramType
-     * @return
      */
     public final RequestUtil Request_requestType(BaseHttpConfig.RequestType paramType) {
         this.requestType = paramType.toString();
@@ -59,7 +58,6 @@ public class RequestUtil {
     /**
      * 设置参数类型
      * @param paramType
-     * @return
      */
     public final RequestUtil Request_ContentType(BaseHttpConfig.ParamType paramType) {
         this.contentType = paramType.toString();
@@ -73,7 +71,6 @@ public class RequestUtil {
     /**
      * 设置超时时间
      * @param timeOut
-     * @return
      */
     public final RequestUtil Reqeust_ConnectTimeOut(int timeOut) {
         this.connectTimeout = timeOut;

@@ -83,12 +83,25 @@ public class BaseHttpConfig {
 
 
     //请求结果解析类型
-    public enum ResponseType {
+//    public enum ResponseType {
+//        List("List"),
+//        Object("Object"),
+//        String("String");
+//        private String msg = "";
+//        ResponseType(String msg){
+//            this.msg = msg;
+//        }
+//        @Override
+//        public String toString() {
+//            return msg;
+//        }
+//    }
+    public enum DataParseType {
         List("List"),
         Object("Object"),
         String("String");
         private String msg = "";
-        ResponseType(String msg){
+        DataParseType(String msg){
             this.msg = msg;
         }
         @Override

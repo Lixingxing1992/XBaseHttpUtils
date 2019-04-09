@@ -18,7 +18,6 @@ public class DataUtil {
      * @param jsonString
      * @param clz
      * @param <T>
-     * @return
      */
     public static <T> List<T> parseJsonToList(String jsonString, Class<T> clz){
         List<T> list = new ArrayList<>();
@@ -40,7 +39,6 @@ public class DataUtil {
      * @param jsonString
      * @param clz
      * @param <T>
-     * @return
      */
     public static <T> T parseJsonToObject(String jsonString, Class<T> clz){
         T t = null;

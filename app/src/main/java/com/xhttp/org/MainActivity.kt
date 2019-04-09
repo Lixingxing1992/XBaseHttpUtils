@@ -153,7 +153,7 @@ class MainActivity : AppCompatActivity() {
                                 .initIDataListener(dataListener)
                                 .initParams(map)
                                 .initClass(EventModel::class.java)
-                                .initResponseType(BaseHttpConfig.ResponseType.List)
+                                .initDataParseType(BaseHttpConfig.DataParseType.List)
                                 .initDialogDismiss(isDialogDismiss)
                                 .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
                                 .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
@@ -221,8 +221,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    var postHttpUrl = "http://wechat.hlwmall.com:8080/huilinwan/api/activity/getActivityList"
+    var postHttpUrl = "https://emap.yuyuantm.com.cn/yuyuan-scenery/scenery/getRecommendScenery"//"http://wechat.hlwmall.com:8080/huilinwan/api/activity/getActivityList"
     var getHttpUrl = "http://103.10.3.77:59527/yuyuan-resource/user/randPage/261/30"
     var paramsStr = ""
-    var map = mapOf("cardCode" to "17101309000670", "page" to 1, "size" to 30)
+    var map = mapOf("returnType" to "CN")//mapOf("cardCode" to "17101309000670", "page" to 1, "size" to 30)
 }

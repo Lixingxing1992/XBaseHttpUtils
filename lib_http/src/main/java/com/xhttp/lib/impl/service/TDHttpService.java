@@ -66,7 +66,7 @@ public class TDHttpService implements IHttpService {
             if (baseHttpParams.openLog) {
                 Log.e("BaseHttpUtils", baseHttpParams.tags + ":\n" +
                         baseHttpParams.request_type.toString() + "\n" +
-                        baseResult.responseType.toString()+ "\n" +
+                        baseResult.dataParseType.toString()+ "\n" +
                         baseHttpParams.url + "\n" +
                         "加密前: "+ oldParams + "\n" +
                         "加密后: "+ params);
@@ -75,7 +75,7 @@ public class TDHttpService implements IHttpService {
             if (baseHttpParams.openLog) {
                 Log.e("BaseHttpUtils", baseHttpParams.tags + ":\n" +
                         baseHttpParams.request_type.toString() + "\n" +
-                        baseResult.responseType.toString()+ "\n" +
+                        baseResult.dataParseType.toString()+ "\n" +
                         baseHttpParams.url);
             }
         }

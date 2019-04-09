@@ -114,7 +114,7 @@ BaseHttpUtils(waitingDialog)
 [具体使用方法请查看这里](https://www.showdoc.cc/BaseHttpUitls "具体使用方法请查看这里")
 
 ## 版本内容说明:
-1.0-beta5    
+v1.0-beta5    
 >
 >请求工具类 实现了DefaultHttpService,JsonHttpService,TDHttpService；解析工具类实现了DefaultDataListener,JsonDataListener,TDDataListener.
 >
@@ -125,13 +125,13 @@ BaseHttpUtils(waitingDialog)
 >TDHttpService，TDDataListener 是试用于 我们公司项目 唐道中的请求方式和解析方式（加密后提交，返回值解析需要和后台接口规则相对应，学习如何拓展的同学可以参考这两个类。
 >
 
-1.0-beta6
+v1.0-beta6
 >
 >YGHttpService  是试用于 我们公司项目 豫园中的请求方式,继承TDHttpService,重写了parseParams方法
 >修改了 (设置返回值的解析模式) initResponseType 方法 
 >       为 initDataParseType,参数从BaseHttpConfig.ResponseType 修改成 BaseHttpConfig.DataParseType
 
-1.0-beta7
+v1.0-beta7
 >
 >init(Context context,boolean isOpenLog) 为必须调用的方法
 >API中新增 提示语句处理方法,具体点击上面的链接查看

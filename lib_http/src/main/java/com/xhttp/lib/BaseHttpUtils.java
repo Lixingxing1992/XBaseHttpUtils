@@ -109,7 +109,7 @@ public final class BaseHttpUtils {
         }else if(iHttpServiceStatics != null){
             throw new RuntimeException("初始化请求工具类和数据解析类时类型错误");
         }
-        if(iDataListenerStatic != null && IDataListener.class.isAssignableFrom(iDataListenerStatics)){
+        if(iDataListenerStatics != null && IDataListener.class.isAssignableFrom(iDataListenerStatics)){
             iDataListenerStatic = iDataListenerStatics;
         }else if(iDataListenerStatics != null){
             throw new RuntimeException("初始化请求工具类和数据解析类时类型错误");

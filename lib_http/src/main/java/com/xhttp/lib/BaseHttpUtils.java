@@ -11,6 +11,7 @@ import com.xhttp.lib.config.BaseHttpConfig;
 import com.xhttp.lib.config.BaseHttpParams;
 import com.xhttp.lib.impl.data.DefaultDataListener;
 import com.xhttp.lib.impl.message.MessageManager;
+import com.xhttp.lib.impl.service.TDHttpService;
 import com.xhttp.lib.interfaces.IDataListener;
 import com.xhttp.lib.interfaces.IHttpService;
 import com.xhttp.lib.interfaces.IHttpResultCallBack;
@@ -103,11 +104,14 @@ public final class BaseHttpUtils {
 
     // 初始化设置 全局的 请求工具类 和 数据解析类
     public static void init(Class iHttpServiceStatics, Class iDataListenerStatics) {
-        if(iHttpServiceStatics.getSuperclass().getName().equals(IHttpService.class.getName())
-                &&(iDataListenerStatics.getSuperclass().getName().equals(IDataListener.class.getName()))){
+        if(iHttpServiceStatics != null && IHttpService.class.isAssignableFrom(iHttpServiceStatics)){
             iHttpServiceStatic = iHttpServiceStatics;
+        }else if(iHttpServiceStatics != null){
+            throw new RuntimeException("初始化请求工具类和数据解析类时类型错误");
+        }
+        if(iDataListenerStatic != null && IDataListener.class.isAssignableFrom(iDataListenerStatics)){
             iDataListenerStatic = iDataListenerStatics;
-        }else{
+        }else if(iDataListenerStatics != null){
             throw new RuntimeException("初始化请求工具类和数据解析类时类型错误");
         }
     }
@@ -267,9 +271,9 @@ public final class BaseHttpUtils {
      */
     static Class iMessageManagerStatic;
     public static void init(Class iMessageManagerStatics) {
-        if(iMessageManagerStatics.getSuperclass().getName().equals(IMessageManager.class.getName())){
+        if( iMessageManagerStatics !=null && IMessageManager.class.isAssignableFrom(iMessageManagerStatics)){
             iMessageManagerStatic = iMessageManagerStatics;
-        }else{
+        }else if(iMessageManagerStatics != null){
             throw new RuntimeException("初始化提示语句工具类时类型错误");
         }
     }

@@ -138,3 +138,8 @@ v1.0-beta7
 >新增IMessageManager,用于处理提示信息
 >
 >
+
+v1.0-beta8
+>
+>修改了初始化方法中类型检查的bug
+>

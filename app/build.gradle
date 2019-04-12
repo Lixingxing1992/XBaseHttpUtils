@@ -43,6 +43,8 @@ android {
             }
         }
         vectorDrawables.useSupportLibrary = true
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     lintOptions {
@@ -115,4 +117,8 @@ dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib-jre7:1.1.51"
     api "org.jetbrains.kotlin:kotlin-reflect:1.1.51"
     api 'org.jetbrains.anko:anko-commons:+'
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }

@@ -21,7 +21,6 @@ import org.acra.sender.ReportSenderException;
 // 发送崩溃日志  注意修改正确的邮箱地址
 public class MyApplication extends Application {
 
-
     @Override
     public void onCreate() {
         super.onCreate();

@@ -34,8 +34,8 @@ public class BaseHttpConfig {
         Error_ResultExceptionTimeOut("服务器连接超时"),
         Error_ResultResponseNone("服务器返回结果为空,请联系系统管理员"),
         Error_HASNONEW("网络连接异常,请先检查您的网络配置"),
-        Error_Result_Parsr_error("后台返回值解析错误"),
-        Error_Result_Parsr_error1("后台返回值解析错误"),
+        Error_Result_Parsr_error("后台返回值解析异常"),
+        Error_Result_Parsr_error_default("后台返回值提示错误"),
         Error_Result_none("未获取到数据"),
         Error_Result_error("获取数据失败");
 

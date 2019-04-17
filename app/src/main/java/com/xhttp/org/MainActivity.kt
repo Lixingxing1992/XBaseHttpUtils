@@ -20,6 +20,7 @@ import com.xhttp.lib.impl.data.TDDataListener
 import com.xhttp.lib.impl.service.DefaultHttpService
 import com.xhttp.lib.impl.service.JsonHttpService
 import com.xhttp.lib.impl.service.TDHttpService
+import com.xhttp.lib.impl.service.YGHttpService
 import com.xhttp.lib.interfaces.IDataListener
 import com.xhttp.lib.interfaces.IHttpService
 import com.xhttp.org.model.EventModel
@@ -271,8 +272,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    var postHttpUrl = "http://wechat.hlwmall.com:8080/huilinwan/api/activity/getActivityList"//"https://emap.yuyuantm.com.cn/yuyuan-scenery/scenery/getRecommendScenery"//
+    var postHttpUrl = "https://emap.yuyuantm.com.cn/yuyuan-scenery/scenery/getRecommendScenery"//"http://wechat.hlwmall.com:8080/huilinwan/api/activity/getActivityList"//
     var getHttpUrl = "http://103.10.3.77:59527/yuyuan-resource/user/randPage/261/30"
     var paramsStr = ""
-    var map = mapOf("cardCode" to "17101309000670", "page" to 1, "size" to 30)//mapOf("returnType" to "CN")//
+    var map = mapOf("returnType" to "CN")//mapOf("cardCode" to "17101309000670", "page" to 1, "size" to 30)//
 }

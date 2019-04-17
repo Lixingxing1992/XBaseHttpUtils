@@ -44,9 +44,9 @@ public class TDDataListener implements IDataListener {
         return this;
     }
 
-    String resCode;
-    String resMsg;
-    String dataResult;
+    protected String resCode;
+    protected String resMsg;
+    protected String dataResult;
 
     @Override
     public void parse(BaseHttpParams baseHttpParams, BaseResult baseResult) {
@@ -124,6 +124,8 @@ public class TDDataListener implements IDataListener {
                 ) {
             return false;
         }
+        baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_Parsr_error_default;
+        baseResult.errorInfo.errorMsg = "".equals(resMsg) ? "请求失败,请稍后重试" : resMsg;
         return true;
     }
 

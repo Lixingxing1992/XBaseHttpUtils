@@ -299,12 +299,22 @@ public final class BaseHttpUtils {
         this.isShowErrorMessage = isShowErrorMessage;
         return this;
     }
+    String errorMsg = "";
+    public BaseHttpUtils initErrorMsg(String errorMsg){
+        this.errorMsg = errorMsg;
+        return this;
+    }
     /**
      * 设置是否显示空数据时提示语句 默认显示
      */
     boolean isShowEmptyMessage = true;
     public BaseHttpUtils initShowEmptyMessage(boolean isShowEmptyMessage){
         this.isShowEmptyMessage = isShowEmptyMessage;
+        return this;
+    }
+    String emptyMsg = "";
+    public BaseHttpUtils initEmptyMsg(String emptyMsg){
+        this.emptyMsg = emptyMsg;
         return this;
     }
     /**
@@ -589,6 +599,11 @@ public final class BaseHttpUtils {
                             baseErrorInfos.errorType = BaseHttpConfig.ErrorType.Error_Use;
                             baseErrorInfos.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
                             baseErrorInfos.errorMsg = "getErrorInfo方法中 BaseErrorInfo不能为空";
+                        }else{
+                            //如果设置过了错误数据提示语句,则会覆盖掉解析类中的设置
+                            if(!"".equals(errorMsg)){
+                                baseErrorInfos.errorMsg = errorMsg;
+                            }
                         }
                         baseResult.errorInfo = baseErrorInfos;
                         if(iMessageManager != null && isShowMessage && isShowErrorMessage){
@@ -626,6 +641,11 @@ public final class BaseHttpUtils {
                             baseErrorInfos.errorType = BaseHttpConfig.ErrorType.Error_Use;
                             baseErrorInfos.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
                             baseErrorInfos.errorMsg = "getErrorInfo方法中 BaseErrorInfo不能为空";
+                        }else{
+                            //如果设置过了空数据提示语句,则会覆盖掉解析类中的设置
+                            if(!"".equals(emptyMsg)){
+                                baseErrorInfos.errorMsg = emptyMsg;
+                            }
                         }
                         baseResult.errorInfo = baseErrorInfos;
                         if(iMessageManager != null && isShowMessage && isShowEmptyMessage){

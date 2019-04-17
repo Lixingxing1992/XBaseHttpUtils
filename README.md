@@ -144,8 +144,8 @@ v1.0-beta9
 >修改了初始化方法中类型检查的bug
 >
 
-v1.0-beata10
+v1.0-beta11
 >
->优化了TDDataListener
->API中新增设置空数据以及错误数据提示语句的方法
+> 优化了TDDataListener
+> API中新增设置空数据以及错误数据提示语句的方法
 >

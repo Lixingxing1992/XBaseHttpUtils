@@ -11,12 +11,14 @@ import com.xhttp.lib.config.BaseHttpConfig;
 import com.xhttp.lib.config.BaseHttpParams;
 import com.xhttp.lib.impl.data.DefaultDataListener;
 import com.xhttp.lib.impl.message.MessageManager;
-import com.xhttp.lib.impl.service.TDHttpService;
 import com.xhttp.lib.interfaces.IDataListener;
+import com.xhttp.lib.interfaces.IDataListenerFilter;
 import com.xhttp.lib.interfaces.IHttpService;
 import com.xhttp.lib.interfaces.IHttpResultCallBack;
 import com.xhttp.lib.impl.service.DefaultHttpService;
+import com.xhttp.lib.interfaces.IHttpServiceFilter;
 import com.xhttp.lib.interfaces.IMessageManager;
+import com.xhttp.lib.interfaces.IMessageManagerFilter;
 import com.xhttp.lib.util.BaseThreadPoolUtil;
 
 import java.util.Map;
@@ -120,23 +122,33 @@ public final class BaseHttpUtils {
      * 针对 本次请求的 请求工具类 iHttpService 和 数据解析类 iDataListener
      * 会覆盖全局的 请求工具类 iHttpServiceStatic 和 数据解析类 iDataListenerStatic
      */
-    // 网络请求
-    private IHttpService iHttpService;
-    // 数据解析
-    private IDataListener iDataListener;
+    // 网络请求工具类处理
+    private IHttpServiceFilter iHttpServiceFilter;
+    // 数据解析工具类处理
+    private IDataListenerFilter iDataListenerFilter;
 
     // 设置 网络请求工具类
     public BaseHttpUtils initIHttpService(IHttpService iHttpService) {
-        this.iHttpService = iHttpService;
+        this.iHttpServiceCurr = iHttpService;
+        return this;
+    }
+    // 对设置好的 IHttpService 进行处理
+    public BaseHttpUtils initIHttpServiceFilter(IHttpServiceFilter iHttpServiceFilter){
+        this.iHttpServiceFilter = iHttpServiceFilter;
         return this;
     }
 
     // 设置 数据解析工具类
     public BaseHttpUtils initIDataListener(IDataListener iDataListener) {
-        this.iDataListener = iDataListener;
+        this.iDataListenerCurr = iDataListener;
         return this;
     }
 
+    // 对设置好的  IDataListener 进行处理
+    public BaseHttpUtils initIDataListenerFilter(IDataListenerFilter iDataListenerFilter){
+        this.iDataListenerFilter = iDataListenerFilter;
+        return this;
+    }
     /**
      * 设置请求路径 url
      *
@@ -154,7 +166,7 @@ public final class BaseHttpUtils {
      * initParams(key,value,key,value....)
      *
      * @param params
-     
+
      */
     public BaseHttpUtils initParams(Object... params) {
         baseHttpParams.params = params;
@@ -166,7 +178,7 @@ public final class BaseHttpUtils {
      * key=value&key=value
      *
      * @param params
-     
+
      */
     public BaseHttpUtils initParams(String params) {
         baseHttpParams.params = params;
@@ -178,7 +190,7 @@ public final class BaseHttpUtils {
      * Map参数
      *
      * @param params
-     
+
      */
     public BaseHttpUtils initParams(Map params) {
         baseHttpParams.params = params;
@@ -192,7 +204,7 @@ public final class BaseHttpUtils {
      * 设置请求方式 RequestType   post  get ...
      *
      * @param type
-     
+
      */
     public BaseHttpUtils initRequestType(BaseHttpConfig.RequestType type) {
         baseHttpParams.request_type = type;
@@ -202,7 +214,7 @@ public final class BaseHttpUtils {
     /**
      * 设置超时时间
      * @param timeOut
-     
+
      */
     public BaseHttpUtils initConnectTimeOut(int timeOut){
         baseHttpParams.timeout_connect = timeOut;
@@ -225,7 +237,7 @@ public final class BaseHttpUtils {
      * 设置返回值 解析模式
      *
      * @param dataParseType
-     
+
      */
     public BaseHttpUtils initDataParseType(BaseHttpConfig.DataParseType dataParseType) {
         baseResult.dataParseType = dataParseType;
@@ -236,24 +248,13 @@ public final class BaseHttpUtils {
      * 设置返回值 解析类型
      *
      * @param tClass
-     
+
      */
     public BaseHttpUtils initClass(Class tClass) {
         baseResult.aClass = tClass;
         return this;
     }
 
-    // 设置需要获取的返回值 code
-//    public BaseHttpUtils initResultCode(String resultCode) {
-//        baseHttpParams.resultCode = resultCode;
-//        return this;
-//    }
-
-    // 设置请求回调
-//    public BaseHttpUtils initHttpCallBack(BaseHttpCallBack iHttpCallBack) {
-//        this.baseHttpCallBack = iHttpCallBack;
-//        return this;
-//    }
 
     /************************ 其他设置 ********************************/
 
@@ -278,8 +279,13 @@ public final class BaseHttpUtils {
         }
     }
     IMessageManager iMessageManager;
+    IMessageManagerFilter iMessageManagerFilter;
     public BaseHttpUtils initIMessageManager(IMessageManager iMessageManager){
         this.iMessageManager = iMessageManager;
+        return this;
+    }
+    public BaseHttpUtils initIMessageManagerFilter(IMessageManagerFilter iMessageManagerFilter){
+        this.iMessageManagerFilter = iMessageManagerFilter;
         return this;
     }
 
@@ -389,9 +395,8 @@ public final class BaseHttpUtils {
     /**
      * 发送请求
      */
-//    private final Handler mHandler = new Handler(Looper.getMainLooper());
-    private final Handler mHandler = new Handler();
-
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
+//    private final Handler mHandler = new Handler();
     public void post() {
         baseHttpParams.request_type = BaseHttpConfig.RequestType.POST;
         request();
@@ -400,6 +405,23 @@ public final class BaseHttpUtils {
     public void get() {
         baseHttpParams.request_type = BaseHttpConfig.RequestType.GET;
         request();
+    }
+
+    public void getList(){
+        baseResult.dataParseType = BaseHttpConfig.DataParseType.List;
+        get();
+    }
+    public void postList(){
+        baseResult.dataParseType = BaseHttpConfig.DataParseType.List;
+        post();
+    }
+    public void getObject(){
+        baseResult.dataParseType = BaseHttpConfig.DataParseType.Object;
+        get();
+    }
+    public void postObject(){
+        baseResult.dataParseType = BaseHttpConfig.DataParseType.Object;
+        post();
     }
 
     // 网络请求要在线程中进行
@@ -423,6 +445,9 @@ public final class BaseHttpUtils {
         }else{
             try {
                 iMessageManager = iMessageManager == null? (IMessageManager) iMessageManagerStatic.newInstance() :iMessageManager;
+                if(iMessageManagerFilter != null && iMessageManager != null){
+                    iMessageManagerFilter.filterIMessageManager(iMessageManager);
+                }
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             } catch (InstantiationException e) {
@@ -445,9 +470,9 @@ public final class BaseHttpUtils {
 
         try {
             // 获取当前的 数据请求工具类
-            iHttpServiceCurr = iHttpService == null ? (IHttpService) (iHttpServiceStatic == null ? null : iHttpServiceStatic.newInstance()) : iHttpService;
+            iHttpServiceCurr = iHttpServiceCurr == null ? (IHttpService) (iHttpServiceStatic == null ? null : iHttpServiceStatic.newInstance()) : iHttpServiceCurr;
             // 获取当前的 数据解析工具类
-            iDataListenerCurr = iDataListener == null ? (IDataListener) (iDataListenerStatic == null ? null : iDataListenerStatic.newInstance())  : iDataListener;
+            iDataListenerCurr = iDataListenerCurr == null ? (IDataListener) (iDataListenerStatic == null ? null : iDataListenerStatic.newInstance())  : iDataListenerCurr;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
@@ -467,7 +492,7 @@ public final class BaseHttpUtils {
                     if (iResultCallBack != null) {
                         baseResult.errorInfo.errorMsg = "请先初始化设置好请求和解析工具类";
                         if(iMessageManager != null && isShowMessage && isShowErrorMessage){
-                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                            iMessageManager.showMessages(contextStatic,baseResult.errorInfo.errorMsg);
                         }
                         iResultCallBack.onFailUse(baseResult.errorInfo);
                         iResultCallBack.onFail(baseResult.errorInfo);
@@ -489,7 +514,7 @@ public final class BaseHttpUtils {
                     if (iResultCallBack != null) {
                         baseResult.errorInfo.errorMsg = "url不能为空";
                         if(iMessageManager != null && isShowMessage && isShowErrorMessage){
-                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                            iMessageManager.showErrorMessages(contextStatic,baseResult.errorInfo.errorMsg);
                         }
                         iResultCallBack.onFailUse(baseResult.errorInfo);
                         iResultCallBack.onFail(baseResult.errorInfo);
@@ -498,6 +523,13 @@ public final class BaseHttpUtils {
                 }
             });
             return;
+        }else{
+            if(iHttpServiceFilter != null && iHttpServiceCurr!= null){
+                iHttpServiceFilter.filterIHttpService(iHttpServiceCurr);
+            }
+            if(iDataListenerFilter != null && iDataListenerCurr!= null){
+                iDataListenerFilter.filterIHttpService(iDataListenerCurr);
+            }
         }
 
         /******************** 发送请求 ***********************/
@@ -524,11 +556,11 @@ public final class BaseHttpUtils {
             final BaseErrorInfo baseErrorInfo = iHttpServiceCurr.getErrorInfo(baseHttpParams, baseResult);
             if (baseErrorInfo == null) {
                 if (baseHttpParams.openLog) {
-                    Log.e(BaseHttpConfig.TAG, tags + ": getErrorInfo方法中 BaseErrorInfo不能为空");
+                    Log.e(BaseHttpConfig.TAG, tags + ":错误描述_ getErrorInfo方法中 BaseErrorInfo不能为空");
                 }
             } else {
                 if (baseHttpParams.openLog) {
-                    Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ": " + baseResult.errorInfo.errorMsg);
+                    Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
                 }
             }
             // 请求结果出现异常
@@ -548,7 +580,7 @@ public final class BaseHttpUtils {
                         }
                         baseResult.errorInfo = baseErrorInfos;
                         if(iMessageManager != null && isShowMessage && isShowErrorMessage){
-                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                            iMessageManager.showErrorMessages(contextStatic,baseResult.errorInfo.errorMsg);
                         }
                         iResultCallBack.onFailRequest(baseErrorInfos);
                         iResultCallBack.onFail(baseErrorInfos);
@@ -578,11 +610,11 @@ public final class BaseHttpUtils {
             final BaseErrorInfo baseErrorInfo = iDataListenerCurr.getErrorInfo(baseHttpParams, baseResult);
             if (baseErrorInfo == null) {
                 if (baseHttpParams.openLog) {
-                    Log.e(BaseHttpConfig.TAG, tags + ": getErrorInfo方法中 BaseErrorInfo不能为空");
+                    Log.e(BaseHttpConfig.TAG, tags + ":错误描述_ getErrorInfo方法中 BaseErrorInfo不能为空");
                 }
             } else {
                 if (baseHttpParams.openLog) {
-                    Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ": " + baseResult.errorInfo.errorMsg);
+                    Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
                 }
             }
             // 解析结果出现异常
@@ -607,7 +639,7 @@ public final class BaseHttpUtils {
                         }
                         baseResult.errorInfo = baseErrorInfos;
                         if(iMessageManager != null && isShowMessage && isShowErrorMessage){
-                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                            iMessageManager.showErrorMessages(contextStatic,baseResult.errorInfo.errorMsg);
                         }
                         iResultCallBack.onFail(baseErrorInfo);
                         iResultCallBack.onFinal(baseResult);
@@ -620,11 +652,11 @@ public final class BaseHttpUtils {
             final BaseErrorInfo baseErrorInfo = iDataListenerCurr.getErrorInfo(baseHttpParams, baseResult);
             if (baseErrorInfo == null) {
                 if (baseHttpParams.openLog) {
-                    Log.e(BaseHttpConfig.TAG, tags + ": getErrorInfo方法中 BaseErrorInfo不能为空");
+                    Log.e(BaseHttpConfig.TAG, tags + ":错误描述_ getErrorInfo方法中 BaseErrorInfo不能为空");
                 }
             } else {
                 if (baseHttpParams.openLog) {
-                    Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ": " + baseResult.errorInfo.errorMsg);
+                    Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
                 }
             }
             // 解析结果标识为 查询结果为空数据
@@ -649,7 +681,7 @@ public final class BaseHttpUtils {
                         }
                         baseResult.errorInfo = baseErrorInfos;
                         if(iMessageManager != null && isShowMessage && isShowEmptyMessage){
-                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                            iMessageManager.showEmptyMessages(contextStatic,baseResult.errorInfo.errorMsg);
                         }
                         iResultCallBack.onEmpty(baseErrorInfo);
                         iResultCallBack.onFinal(baseResult);
@@ -671,7 +703,7 @@ public final class BaseHttpUtils {
                     if (iResultCallBack != null) {
                         if(iMessageManager != null && isShowMessage && isShowSuccessMessage){
                             if(!"".equals(successMsg) && null != successMsg){
-                                iMessageManager.showMessage(contextStatic,successMsg);
+                                iMessageManager.showMessages(contextStatic,successMsg);
                             }
                         }
                         iResultCallBack.onSuccess(baseResult);
@@ -682,7 +714,7 @@ public final class BaseHttpUtils {
                     }
                     if (iResultCallBack != null) {
                         if(iMessageManager != null && isShowMessage && isShowErrorMessage){
-                            iMessageManager.showMessage(contextStatic,baseResult.errorInfo.errorMsg);
+                            iMessageManager.showErrorMessages(contextStatic,baseResult.errorInfo.errorMsg);
                         }
                         iResultCallBack.onFail(baseResult.errorInfo);
                     }

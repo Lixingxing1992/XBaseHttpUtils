@@ -23,6 +23,7 @@ import com.xhttp.lib.impl.service.TDHttpService
 import com.xhttp.lib.impl.service.YGHttpService
 import com.xhttp.lib.interfaces.IDataListener
 import com.xhttp.lib.interfaces.IHttpService
+import com.xhttp.lib.util.BaseThreadPoolUtil
 import com.xhttp.org.model.EventModel
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -205,6 +206,9 @@ class MainActivity : AppCompatActivity() {
                                 .initShowErrorMessage(isShowError)
                                 .initShowEmptyMessage(isShowEmpty)
                                 .initShowSuccessMessage(isShowSuccess)
+                                .initIMessageManagerFilter {
+
+                                }
                                 .initHttpResultCallBack(object : HttpResultCallBack() {
                                     override fun onSuccess(baseResult: BaseResult) {
                                         result.text = baseResult.getResult().result_str
@@ -220,28 +224,30 @@ class MainActivity : AppCompatActivity() {
                     }
                     // Get
                     R.id.radioButton2 -> {
-                        BaseHttpUtils(waitingDialog)
-                                .initUrl(url.text.toString())
-                                .initIHttpService(httpService)
-                                .initIDataListener(dataListener)
-                                .initDialogDismiss(isDialogDismiss)
-                                .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
-                                .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
-                                .initDialogDismissWhenFail(isDialogDismissWhenFail)
-                                .initShowMessage(isShow)
-                                .initShowErrorMessage(isShowError)
-                                .initShowEmptyMessage(isShowEmpty)
-                                .initShowSuccessMessage(isShowSuccess)
-                                .initHttpResultCallBack(object : HttpResultCallBack() {
-                                    override fun onSuccess(baseResult: BaseResult) {
-                                        var resultStr = baseResult.getResult().result_str
-                                        result.text = resultStr
-                                    }
-                                    override fun onFail(errorInfo: BaseErrorInfo) {
-                                        result.text = errorInfo.errorMsg
-                                    }
-                                })
-                                .get()
+                        BaseThreadPoolUtil.execute {
+                            BaseHttpUtils(waitingDialog)
+                                    .initUrl(url.text.toString())
+                                    .initIHttpService(httpService)
+                                    .initIDataListener(dataListener)
+                                    .initDialogDismiss(isDialogDismiss)
+                                    .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
+                                    .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
+                                    .initDialogDismissWhenFail(isDialogDismissWhenFail)
+                                    .initShowMessage(isShow)
+                                    .initShowErrorMessage(isShowError)
+                                    .initShowEmptyMessage(isShowEmpty)
+                                    .initShowSuccessMessage(isShowSuccess)
+                                    .initHttpResultCallBack(object : HttpResultCallBack() {
+                                        override fun onSuccess(baseResult: BaseResult) {
+                                            var resultStr = baseResult.getResult().result_str
+                                            result.text = resultStr
+                                        }
+                                        override fun onFail(errorInfo: BaseErrorInfo) {
+                                            result.text = errorInfo.errorMsg
+                                        }
+                                    })
+                                    .get()
+                        }
                     }
                 }
             },2000)
@@ -272,8 +278,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    var postHttpUrl = "https://emap.yuyuantm.com.cn/yuyuan-scenery/scenery/getRecommendScenery"//"http://wechat.hlwmall.com:8080/huilinwan/api/activity/getActivityList"//
+    var postHttpUrl = "http://wechat.hlwmall.com:8080/huilinwan/api/activity/getActivityList"//"https://emap.yuyuantm.com.cn/yuyuan-scenery/scenery/getRecommendScenery"//
     var getHttpUrl = "http://103.10.3.77:59527/yuyuan-resource/user/randPage/261/30"
     var paramsStr = ""
-    var map = mapOf("returnType" to "CN")//mapOf("cardCode" to "17101309000670", "page" to 1, "size" to 30)//
+    var map = mapOf("cardCode" to "17101309000670", "page" to 1, "size" to 30)//mapOf("returnType" to "CN")//
 }

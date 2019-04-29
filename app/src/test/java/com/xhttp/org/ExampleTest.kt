@@ -1,11 +1,13 @@
 package com.xhttp.org
 
 import android.content.Intent
+import android.test.mock.MockContext
 import android.webkit.URLUtil
 
 import com.xhttp.lib.BaseHttpUtils
 import com.xhttp.lib.BaseResult
 import com.xhttp.lib.callback.HttpResultCallBack
+import com.xhttp.lib.config.BaseHttpConfig
 import com.xhttp.lib.impl.data.TDDataListener
 import com.xhttp.lib.impl.service.TDHttpService
 import com.xhttp.lib.impl.service.YGHttpService
@@ -19,18 +21,8 @@ import org.junit.Test
 class ExampleTest {
     @Test
     fun testClass() {
+        var context = MockContext()
+        BaseHttpUtils.init(context, true)
         BaseHttpUtils.init(YGHttpService::class.java, TDDataListener::class.java)
-        BaseHttpUtils()
-                .initUrl("http://103.10.3.77:59527/yuyuan-store/activity/receiveActivityCoupon")
-                .initParams("activityId", 0, "couponId", 0, "type", 1, "couponType", 1,
-                        "userTel", "13213","memberId","123123")
-                .initSuccessMsg("成功")
-                .initShowSuccessMessage(true)
-                .initHttpResultCallBack(object:HttpResultCallBack(){
-                    override fun onSuccess(baseResult: BaseResult?) {
-                        super.onSuccess(baseResult)
-                    }
-                })
-        .post()
     }
 }

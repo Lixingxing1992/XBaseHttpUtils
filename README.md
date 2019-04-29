@@ -149,3 +149,12 @@ v1.0-beta11
 > 优化了TDDataListener
 > API中新增设置空数据以及错误数据提示语句的方法
 >
+
+v1.0-beta12
+>
+> 优化了JsonDataListener
+> API中新增 IHttpService和 IDataListener的过滤器方法,可是单独设置具体属性
+> 修改了MessageManager工具类,将数据处理分成具体的 成功 失败 空数据进行处理
+> 增加了 postList postObject getList getObject方法
+>
+

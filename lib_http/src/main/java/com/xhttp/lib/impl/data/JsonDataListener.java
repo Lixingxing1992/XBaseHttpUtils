@@ -46,6 +46,7 @@ public class JsonDataListener implements IDataListener {
                             result.setResult_list(lists);
                         }
                     }
+                    break;
                 }
                 case Object: {
                     if (baseResult.aClass == null) {
@@ -59,6 +60,7 @@ public class JsonDataListener implements IDataListener {
                             result.setResult_object(obj);
                         }
                     }
+                    break;
                 }
                 case String: {
                     baseResult.isResultParseSucess = true;

@@ -158,3 +158,9 @@ v1.0-beta12
 > 增加了 postList postObject getList getObject方法
 >
 
+v1.0-beta13
+>
+> 优化了JsonDataListener
+> 为了项目安全性删除了 TDHttpService 和 TDDataListener
+>
+

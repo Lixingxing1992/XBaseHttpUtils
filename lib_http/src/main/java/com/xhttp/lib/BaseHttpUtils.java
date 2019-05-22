@@ -22,6 +22,7 @@ import com.xhttp.lib.interfaces.IMessageManagerFilter;
 import com.xhttp.lib.util.BaseThreadPoolUtil;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Created by lixingxing on 2019/3/26.
@@ -76,9 +77,9 @@ public final class BaseHttpUtils {
         this.baseHttpParams = baseHttpParams;
         this.baseResult = new BaseResult();
 
-        tags = System.currentTimeMillis() + "";
+        tags = UUID.randomUUID().toString();
+//        tags = System.currentTimeMillis() + "";
         this.baseHttpParams.tags = tags;
-
         if (iHttpServiceStatic == null) {
             // 默认
             iHttpServiceStatic = DefaultHttpService.class;

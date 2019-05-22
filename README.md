@@ -164,3 +164,7 @@ v1.0-beta13
 > 为了项目安全性删除了 TDHttpService 和 TDDataListener
 >
 
+v1.0-beta14
+>
+>优化了log中每个请求的唯一标识生成方法 尽可能的保证每次请求的log标识都能唯一
+>

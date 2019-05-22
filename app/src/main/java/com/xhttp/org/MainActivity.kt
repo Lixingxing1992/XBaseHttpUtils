@@ -16,11 +16,8 @@ import com.xhttp.lib.config.BaseErrorInfo
 import com.xhttp.lib.config.BaseHttpConfig
 import com.xhttp.lib.impl.data.DefaultDataListener
 import com.xhttp.lib.impl.data.JsonDataListener
-import com.xhttp.lib.impl.data.TDDataListener
 import com.xhttp.lib.impl.service.DefaultHttpService
 import com.xhttp.lib.impl.service.JsonHttpService
-import com.xhttp.lib.impl.service.TDHttpService
-import com.xhttp.lib.impl.service.YGHttpService
 import com.xhttp.lib.interfaces.IDataListener
 import com.xhttp.lib.interfaces.IHttpService
 import com.xhttp.lib.util.BaseThreadPoolUtil
@@ -95,9 +92,9 @@ class MainActivity : AppCompatActivity() {
                 R.id.service2 -> {
                     httpService = JsonHttpService()
                 }
-                R.id.service3 ->{
-                    httpService = TDHttpService()
-                }
+//                R.id.service3 ->{
+//                    httpService = TDHttpService()
+//                }
             }
         }
 
@@ -109,9 +106,9 @@ class MainActivity : AppCompatActivity() {
                 R.id.data2 -> {
                     dataListener = JsonDataListener()
                 }
-                R.id.data3 ->{
-                    dataListener = TDDataListener()
-                }
+//                R.id.data3 ->{
+//                    dataListener = TDDataListener()
+//                }
             }
         }
 

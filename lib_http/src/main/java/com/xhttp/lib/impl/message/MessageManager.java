@@ -11,17 +11,23 @@ import com.xhttp.lib.interfaces.IMessageManager;
  */
 public class MessageManager implements IMessageManager {
     @Override
-    public void showMessages(Context context,String msg) {
-        Toast.makeText(context,msg,Toast.LENGTH_SHORT).show();
+    public void showMessages(Context context, String msg) {
+        if (msg != null && !"".equals(msg)) {
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
     public void showErrorMessages(Context context, String msg) {
-        Toast.makeText(context,msg,Toast.LENGTH_SHORT).show();
+        if (msg != null && !"".equals(msg)) {
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
     public void showEmptyMessages(Context context, String msg) {
-        Toast.makeText(context,msg,Toast.LENGTH_SHORT).show();
+        if (msg != null && !"".equals(msg)) {
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+        }
     }
 }

@@ -312,12 +312,23 @@ public final class BaseHttpUtils {
         return this;
     }
     /**
-     * 设置是否显示空数据时提示语句 默认显示
+     * 设置是否显示空数据时提示语句 默认null 列表模式下不显示
+     * 如果列表模式下想设置显示 可调用此方法 initShowEmptyMessage(true)
      */
-    boolean isShowEmptyMessage = true;
-    public BaseHttpUtils initShowEmptyMessage(boolean isShowEmptyMessage){
+    Boolean isShowEmptyMessage = null;
+    public BaseHttpUtils initShowEmptyMessage(Boolean isShowEmptyMessage){
         this.isShowEmptyMessage = isShowEmptyMessage;
         return this;
+    }
+    private void isCheckEmptyMessage(){
+        if(isShowEmptyMessage == null){
+            // 默认模式 列表模式下不显示
+            if(baseResult.dataParseType == BaseHttpConfig.DataParseType.List){
+                isShowEmptyMessage = false;
+            }else{
+                isShowEmptyMessage = true;
+            }
+        }
     }
     String emptyMsg = "";
     public BaseHttpUtils initEmptyMsg(String emptyMsg){
@@ -441,6 +452,7 @@ public final class BaseHttpUtils {
 
     private void requests() {
         baseHttpParams.openLog = checkLog();
+        isCheckEmptyMessage();
         if(iResultCallBack == null){
             iMessageManager = null;
         }else{

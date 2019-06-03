@@ -427,9 +427,17 @@ public final class BaseHttpUtils {
         baseResult.dataParseType = BaseHttpConfig.DataParseType.List;
         post();
     }
+    public void postList(Class clz){
+        baseResult.aClass = clz;
+        postList();
+    }
     public void getObject(){
         baseResult.dataParseType = BaseHttpConfig.DataParseType.Object;
         get();
+    }
+    public void postObject(Class clz){
+        baseResult.aClass = clz;
+        postObject();
     }
     public void postObject(){
         baseResult.dataParseType = BaseHttpConfig.DataParseType.Object;

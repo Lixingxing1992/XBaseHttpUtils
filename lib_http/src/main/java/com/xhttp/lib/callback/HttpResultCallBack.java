@@ -3,7 +3,7 @@ package com.xhttp.lib.callback;
 import com.xhttp.lib.BaseResult;
 import com.xhttp.lib.config.BaseErrorInfo;
 import com.xhttp.lib.config.BaseHttpParams;
-import com.xhttp.lib.interfaces.IHttpResultCallBack;
+import com.xhttp.lib.interfaces.callback.IHttpResultCallBack;
 
 /**
  * 回调抽象类,使用此回调可以不强制重写 onEmpty 和 onFinal
@@ -31,22 +31,12 @@ public abstract class HttpResultCallBack implements IHttpResultCallBack {
     }
 
     @Override
-    public void onSuccessRequest(BaseHttpParams baseHttpParams, BaseResult baseResult) {
-
-    }
-
-    @Override
     public void onFailRequest(BaseErrorInfo errorInfo) {
 
     }
 
     @Override
     public void onBeforeDataParse(BaseHttpParams baseHttpParams, BaseResult baseResult) {
-
-    }
-
-    @Override
-    public void onSuccess(BaseResult baseResult) {
 
     }
 

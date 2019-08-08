@@ -1,4 +1,4 @@
-package com.xhttp.lib.interfaces;
+package com.xhttp.lib.interfaces.callback;
 
 import com.xhttp.lib.BaseResult;
 import com.xhttp.lib.config.BaseErrorInfo;
@@ -13,16 +13,13 @@ public interface IHttpResultCallBack {
     // 调用方式失败
     void onFailUse(BaseErrorInfo errorInfo);
 
-
-    // 请求开始处理
+    // 开始进行请求
     void onRequest(BaseHttpParams baseHttpParams);
     // 请求成功
-    void onSuccessRequest(BaseHttpParams baseHttpParams, BaseResult baseResult);
     void onFailRequest(BaseErrorInfo errorInfo);
 
     // 解析返回值之前(必须请求成功)
     void onBeforeDataParse(BaseHttpParams baseHttpParams, BaseResult baseResult);
-
 
     // 解析成功 -- 整个请求过程成功
     void onSuccess(BaseResult baseResult);

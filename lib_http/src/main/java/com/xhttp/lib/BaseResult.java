@@ -2,37 +2,25 @@ package com.xhttp.lib;
 
 import com.xhttp.lib.config.BaseHttpConfig;
 import com.xhttp.lib.config.BaseErrorInfo;
+import com.xhttp.lib.model.BaseRequestResult;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by lixingxing on 2019/3/26.
  */
 public class BaseResult {
-    // 返回值 数组
-    public byte[] bytes;
-    // 返回值解析类型
-    public Class aClass;
-    // 返回值解析模式 默认是String
-    public BaseHttpConfig.DataParseType dataParseType = BaseHttpConfig.DataParseType.String;
-
-
-    // 错误类型:  请求失败  解析失败  返回值提示失败
-//    public BaseHttpConfig.ErrorType errorType = BaseHttpConfig.ErrorType.Error_Request;
-    // 错误码
-//    public BaseHttpConfig.ErrorCode errorCode = BaseHttpConfig.ErrorCode.Error_ResultErrorCode;
+    public BaseResult(){}
 
     // 是否成功
     public boolean success = false;
-    // 请求是否成功
-    public boolean isRequestSuccess = false;
-    // 网络连接码   200 成功  -1 结果为空 -2有异常信息
-    public int responseCode = 200; //请求返回连接码
+    // 是否是空数据  空数据的时候 success 应为true
+    public boolean isEmpty = false;
 
-    // 返回值解析是否成功
-    public boolean isResultParseSucess = false;
-
+    public BaseRequestResult baseRequestResult;
     // 错误信息描述
     public BaseErrorInfo errorInfo = new BaseErrorInfo();
 
@@ -41,13 +29,16 @@ public class BaseResult {
         return result;
     }
     public static class Result{
-        // 全部返回值
+        // 全部的返回值
         public String resultAll;
+        // 需要解析的返回值  例如 返回值是 {"resCode":0,"resMsg":"aaa",data:[]} resultData就是data后面的值
+        public String resultData;
 
-        // 解析出来需要处理的返回值
+        // 根据解析类型解析出来的返回值
         private Object result_object;
         private List<Object> result_list = new ArrayList<>();
         private String result_str;
+        private Map<String,Object> result_list_combination = new HashMap<>();
 
         public <T> T getResult_object() {
             if(result_object != null){
@@ -77,6 +68,14 @@ public class BaseResult {
 
         public void setResult_str(String result_str) {
             this.result_str = result_str;
+        }
+
+        public Map<String, Object> getResult_list_combination() {
+            return result_list_combination;
+        }
+
+        public void setResult_list_combination(Map<String, Object> result_list_combination) {
+            this.result_list_combination = result_list_combination;
         }
     }
 }

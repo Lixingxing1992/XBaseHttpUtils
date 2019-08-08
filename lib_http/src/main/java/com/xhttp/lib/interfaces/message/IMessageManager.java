@@ -1,4 +1,4 @@
-package com.xhttp.lib.interfaces;
+package com.xhttp.lib.interfaces.message;
 
 import android.content.Context;
 

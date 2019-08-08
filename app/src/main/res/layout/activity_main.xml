@@ -182,11 +182,11 @@
                         android:layout_height="wrap_content"
                         android:text="JsonService" />
 
-                    <!--<RadioButton-->
-                        <!--android:id="@+id/service3"-->
-                        <!--android:layout_width="match_parent"-->
-                        <!--android:layout_height="wrap_content"-->
-                        <!--android:text="TDService" />-->
+                    <RadioButton
+                        android:id="@+id/service3"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="TDService" />
 
                 </RadioGroup>
                 <RadioGroup
@@ -209,12 +209,11 @@
                         android:layout_height="wrap_content"
                         android:text="JsonDataListener" />
 
-                    <!--<RadioButton-->
-                        <!--android:id="@+id/data3"-->
-                        <!--android:layout_width="match_parent"-->
-                        <!--android:layout_height="wrap_content"-->
-                        <!--android:text="TDDataListener" />-->
-
+                    <RadioButton
+                        android:id="@+id/data3"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="TDDataListener" />
                 </RadioGroup>
             </LinearLayout>
 

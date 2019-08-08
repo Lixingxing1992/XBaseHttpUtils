@@ -8,9 +8,7 @@ import com.xhttp.lib.BaseHttpUtils
 import com.xhttp.lib.BaseResult
 import com.xhttp.lib.callback.HttpResultCallBack
 import com.xhttp.lib.config.BaseHttpConfig
-import com.xhttp.lib.impl.data.TDDataListener
-import com.xhttp.lib.impl.service.TDHttpService
-import com.xhttp.lib.impl.service.YGHttpService
+import com.xhttp.lib.config.BaseHttpParams
 import com.xhttp.lib.interfaces.IHttpService
 
 import org.junit.Test
@@ -22,7 +20,14 @@ class ExampleTest {
     @Test
     fun testClass() {
         var context = MockContext()
-        BaseHttpUtils.init(context, true)
-        BaseHttpUtils.init(YGHttpService::class.java, TDDataListener::class.java)
+//        BaseHttpUtils.init(context, true)
+//        BaseHttpUtils.init(YGHttpService::class.java, TDDataListener::class.java)
+        var btp = BaseHttpParams()
+        btp.request_type = BaseHttpConfig.RequestType.POST
+        btp.url = "hahahah"
+
+        var btp2 = BaseHttpParams(btp)
+        btp.url = "asdf"
+        println(btp2.url)
     }
 }

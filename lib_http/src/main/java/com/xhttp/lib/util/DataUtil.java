@@ -19,7 +19,7 @@ public class DataUtil {
      * @param clz
      * @param <T>
      */
-    public static <T> List<T> parseJsonToList(String jsonString, Class<T> clz){
+    public static <T> List<T> parseJsonToList(String jsonString, Class<T> clz) throws Exception{
         List<T> list = new ArrayList<>();
         JsonParser parser = new JsonParser();
         try {
@@ -35,6 +35,7 @@ public class DataUtil {
             }
         }catch (Exception e){
             list = null;
+            throw e;
         }
         return list;
     }
@@ -44,13 +45,13 @@ public class DataUtil {
      * @param clz
      * @param <T>
      */
-    public static <T> T parseJsonToObject(String jsonString, Class<T> clz){
+    public static <T> T parseJsonToObject(String jsonString, Class<T> clz) throws Exception{
         T t = null;
         Gson gson = new Gson();
         try{
             t = gson.fromJson(jsonString, clz);
         }catch (Exception e){
-            e.printStackTrace();
+            throw e;
         }
         return t;
     }

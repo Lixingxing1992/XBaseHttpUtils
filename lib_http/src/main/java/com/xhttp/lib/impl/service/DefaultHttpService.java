@@ -2,14 +2,11 @@ package com.xhttp.lib.impl.service;
 
 import android.util.Log;
 
-import com.xhttp.lib.BaseResult;
-import com.xhttp.lib.config.BaseErrorInfo;
 import com.xhttp.lib.config.BaseHttpConfig;
 import com.xhttp.lib.config.BaseHttpParams;
-import com.xhttp.lib.interfaces.IHttpService;
+import com.xhttp.lib.interfaces.http.IHttpService;
+import com.xhttp.lib.model.BaseRequestResult;
 import com.xhttp.lib.util.RequestUtil;
-
-import org.json.JSONObject;
 
 import java.util.Map;
 import java.util.Set;
@@ -20,12 +17,7 @@ import java.util.Set;
 public class DefaultHttpService implements IHttpService {
 
     @Override
-    public BaseErrorInfo getErrorInfo(BaseHttpParams baseHttpParams, BaseResult baseResult) {
-        return baseResult.errorInfo;
-    }
-
-    @Override
-    public Object parseParams(BaseHttpParams baseHttpParams, BaseResult baseResult) {
+    public Object parseParams(BaseHttpParams baseHttpParams) {
         String params = "";
         // 如果是post提交方式
         if(baseHttpParams.request_type == BaseHttpConfig.RequestType.POST){
@@ -47,7 +39,7 @@ public class DefaultHttpService implements IHttpService {
         if (baseHttpParams.openLog) {
             Log.e("BaseHttpUtils", baseHttpParams.tags + ":\n" +
                     baseHttpParams.request_type.toString() + "\n" +
-                    baseResult.dataParseType.toString()+ "\n" +
+                    baseHttpParams.dataParseType.toString()+ "\n" +
                     baseHttpParams.url + "\n" +
                     params);
         }
@@ -55,17 +47,15 @@ public class DefaultHttpService implements IHttpService {
     }
 
     @Override
-    public void request(BaseHttpParams baseHttpParams, BaseResult baseResult) {
-        new RequestUtil(baseHttpParams, baseResult)
+    public BaseRequestResult request(BaseHttpParams baseHttpParams) {
+        BaseRequestResult baseRequestResult =
+                new RequestUtil(baseHttpParams)
                 .Request_ContentType(BaseHttpConfig.ParamType.DEFAULT)
                 .Request_requestType(baseHttpParams.request_type)
                 .Reqeust_ConnectTimeOut(baseHttpParams.timeout_connect)
                 .Reqeust_ReadTimeOut(baseHttpParams.timeout_read)
                 .request((baseHttpParams.params == null ? "" : baseHttpParams.params.toString()), baseHttpParams.url);
+        return baseRequestResult;
     }
 
-    @Override
-    public boolean isFail(BaseHttpParams baseHttpParams, BaseResult baseResult) {
-        return !baseResult.isRequestSuccess;
-    }
 }

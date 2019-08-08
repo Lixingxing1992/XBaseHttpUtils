@@ -16,12 +16,14 @@ import com.xhttp.lib.config.BaseErrorInfo
 import com.xhttp.lib.config.BaseHttpConfig
 import com.xhttp.lib.impl.data.DefaultDataListener
 import com.xhttp.lib.impl.data.JsonDataListener
+import com.xhttp.lib.impl.data.TDDataListener
 import com.xhttp.lib.impl.service.DefaultHttpService
 import com.xhttp.lib.impl.service.JsonHttpService
-import com.xhttp.lib.interfaces.IDataListener
-import com.xhttp.lib.interfaces.IHttpService
+import com.xhttp.lib.impl.service.TDHttpService
+import com.xhttp.lib.interfaces.data.IDataListener
+import com.xhttp.lib.interfaces.http.IHttpService
 import com.xhttp.lib.util.BaseThreadPoolUtil
-import com.xhttp.org.model.EventModel
+import com.xhttp.org.model.AchievnmentModel
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -92,9 +94,9 @@ class MainActivity : AppCompatActivity() {
                 R.id.service2 -> {
                     httpService = JsonHttpService()
                 }
-//                R.id.service3 ->{
-//                    httpService = TDHttpService()
-//                }
+                R.id.service3 ->{
+                    httpService = TDHttpService()
+                }
             }
         }
 
@@ -106,9 +108,9 @@ class MainActivity : AppCompatActivity() {
                 R.id.data2 -> {
                     dataListener = JsonDataListener()
                 }
-//                R.id.data3 ->{
-//                    dataListener = TDDataListener()
-//                }
+                R.id.data3 ->{
+                    dataListener = TDDataListener()
+                }
             }
         }
 
@@ -193,8 +195,8 @@ class MainActivity : AppCompatActivity() {
                                 .initIHttpService(httpService)
                                 .initIDataListener(dataListener)
                                 .initParams(map)
-                                .initClass(EventModel::class.java)
-                                .initDataParseType(BaseHttpConfig.DataParseType.List)
+                                .initClass(AchievnmentModel::class.java)
+                                .initDataParseType(BaseHttpConfig.DataParseType.Combination)
                                 .initDialogDismiss(isDialogDismiss)
                                 .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
                                 .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
@@ -203,12 +205,15 @@ class MainActivity : AppCompatActivity() {
                                 .initShowErrorMessage(isShowError)
                                 .initShowEmptyMessage(isShowEmpty)
                                 .initShowSuccessMessage(isShowSuccess)
+                                .initIDataListenerFilter {
+                                    (it as TDDataListener).setResultCodes(mapOf("count" to BaseHttpConfig.DataParseType.String,"list" to BaseHttpConfig.DataParseType.List))
+                                }
                                 .initIMessageManagerFilter {
 
                                 }
                                 .initHttpResultCallBack(object : HttpResultCallBack() {
                                     override fun onSuccess(baseResult: BaseResult) {
-                                        result.text = baseResult.getResult().result_str
+                                        result.text = baseResult.getResult().resultData
                                     }
                                     override fun onEmpty(errorInfo: BaseErrorInfo) {
                                         result.text = errorInfo.errorMsg
@@ -275,8 +280,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    var postHttpUrl = "http://wechat.hlwmall.com:8080/huilinwan/api/activity/getActivityList"//"https://emap.yuyuantm.com.cn/yuyuan-scenery/scenery/getRecommendScenery"//
+    var postHttpUrl = "http://103.10.3.77:59527/yuyuan-interact/achievement/userAchievement"//"http://www.xiaooo.club:8080/tangdao/api/banner/getBannerByType"
     var getHttpUrl = "http://103.10.3.77:59527/yuyuan-resource/user/randPage/261/30"
     var paramsStr = ""
-    var map = mapOf("cardCode" to "17101309000670", "page" to 1, "size" to 30)//mapOf("returnType" to "CN")//
+    var map = mapOf("mobile" to "18260031044")//mapOf("type" to "50")//
 }

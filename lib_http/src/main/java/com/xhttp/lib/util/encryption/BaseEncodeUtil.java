@@ -22,9 +22,13 @@ public class BaseEncodeUtil
     };
 
     public static void main(String[] arg0){
-
+        System.out.println(ooEncode("{\"memberId\":100}"));
     }
-
+    static String key = "",iv = "";
+    public static void init(String keys, String ivs){
+        key = keys;
+        iv = ivs;
+    }
     public static String ooEncode(String str, String key, String iv)
         throws Exception
     {
@@ -42,7 +46,7 @@ public class BaseEncodeUtil
         String str = "";
         try
         {
-            str = ooEncode(strs, "6D4267DF81D83449D851617E", "78549912");
+            str = ooEncode(strs, key, iv);
         }
         catch (Exception e)
         {

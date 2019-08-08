@@ -1,4 +1,4 @@
-package com.xhttp.lib.interfaces;
+package com.xhttp.lib.interfaces.message;
 
 /**
  * Created by lixingxing on 2019/4/29.

@@ -3,7 +3,7 @@ package com.xhttp.lib.impl.message;
 import android.content.Context;
 import android.widget.Toast;
 
-import com.xhttp.lib.interfaces.IMessageManager;
+import com.xhttp.lib.interfaces.message.IMessageManager;
 
 /**
  * 展示提示的工具类

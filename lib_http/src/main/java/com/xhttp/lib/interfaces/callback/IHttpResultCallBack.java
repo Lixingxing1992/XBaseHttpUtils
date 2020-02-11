@@ -1,8 +1,8 @@
 package com.xhttp.lib.interfaces.callback;
 
 import com.xhttp.lib.BaseResult;
-import com.xhttp.lib.config.BaseErrorInfo;
-import com.xhttp.lib.config.BaseHttpParams;
+import com.xhttp.lib.model.BaseErrorInfo;
+import com.xhttp.lib.params.BaseHttpParams;
 
 /**
  * Created by lixingxing on 2019/3/26.
@@ -10,22 +10,12 @@ import com.xhttp.lib.config.BaseHttpParams;
 public interface IHttpResultCallBack {
     // 请求发出之前
     void onBeforeRequest(BaseHttpParams baseHttpParams);
-    // 调用方式失败
-    void onFailUse(BaseErrorInfo errorInfo);
-
-    // 开始进行请求
-    void onRequest(BaseHttpParams baseHttpParams);
-    // 请求成功
-    void onFailRequest(BaseErrorInfo errorInfo);
-
-    // 解析返回值之前(必须请求成功)
-    void onBeforeDataParse(BaseHttpParams baseHttpParams, BaseResult baseResult);
 
     // 解析成功 -- 整个请求过程成功
     void onSuccess(BaseResult baseResult);
 
-    // 空数据
-    void onEmpty(BaseErrorInfo errorInfo);
+    // 空数据  一般对list返回值有效
+    void onEmpty(BaseResult baseResult);
 
     // 错误信息
     void onFail(BaseErrorInfo errorInfo);

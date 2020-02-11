@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author zet
  *
  */
-public class BaseThreadPoolUtil {
+public class BaseThreadPoolUtils {
 
-    private BaseThreadPoolUtil() {
+    private BaseThreadPoolUtils() {
     }
 
     // 线程池核心线程数

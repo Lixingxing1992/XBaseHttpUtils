@@ -12,17 +12,14 @@ import android.widget.Toast
 import com.xhttp.lib.BaseHttpUtils
 import com.xhttp.lib.BaseResult
 import com.xhttp.lib.callback.HttpResultCallBack
-import com.xhttp.lib.config.BaseErrorInfo
 import com.xhttp.lib.config.BaseHttpConfig
 import com.xhttp.lib.impl.data.DefaultDataListener
-import com.xhttp.lib.impl.data.JsonDataListener
-import com.xhttp.lib.impl.data.TDDataListener
 import com.xhttp.lib.impl.service.DefaultHttpService
 import com.xhttp.lib.impl.service.JsonHttpService
-import com.xhttp.lib.impl.service.TDHttpService
 import com.xhttp.lib.interfaces.data.IDataListener
 import com.xhttp.lib.interfaces.http.IHttpService
-import com.xhttp.lib.util.BaseThreadPoolUtil
+import com.xhttp.lib.model.BaseErrorInfo
+import com.xhttp.lib.util.BaseThreadPoolUtils
 import com.xhttp.org.model.AchievnmentModel
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -32,7 +29,7 @@ class MainActivity : AppCompatActivity() {
     var listView = ArrayList<View>()
 
     var httpService: IHttpService = DefaultHttpService()
-    var dataListener: IDataListener = DefaultDataListener()
+    var dataListener = DefaultDataListener()
 
     var isDialogDismiss = true
     var isDialogDismissWhenSuccess = true
@@ -95,7 +92,7 @@ class MainActivity : AppCompatActivity() {
                     httpService = JsonHttpService()
                 }
                 R.id.service3 ->{
-                    httpService = TDHttpService()
+//                    httpService = TDHttpService()
                 }
             }
         }
@@ -106,10 +103,10 @@ class MainActivity : AppCompatActivity() {
                     dataListener = DefaultDataListener()
                 }
                 R.id.data2 -> {
-                    dataListener = JsonDataListener()
+//                    dataListener = JsonDataListener()
                 }
                 R.id.data3 ->{
-                    dataListener = TDDataListener()
+//                    dataListener = TDDataListener()
                 }
             }
         }
@@ -180,7 +177,7 @@ class MainActivity : AppCompatActivity() {
 
 
         http.setOnClickListener {
-            waitingDialog.show()
+//            waitingDialog.show()
             result.text = ""
             Handler().postDelayed({
                 when (httpTypeId) {
@@ -190,62 +187,69 @@ class MainActivity : AppCompatActivity() {
                         for (view in listView) {
                             map.put((view.findViewById(R.id.keys) as EditText).text.toString(), (view.findViewById(R.id.values) as EditText).text.toString())
                         }
-                        BaseHttpUtils(waitingDialog)
+                        BaseHttpUtils.create()
                                 .initUrl(url.text.toString())
                                 .initIHttpService(httpService)
                                 .initIDataListener(dataListener)
-                                .initParams(map)
-                                .initClass(AchievnmentModel::class.java)
-                                .initDataParseType(BaseHttpConfig.DataParseType.Combination)
-                                .initDialogDismiss(isDialogDismiss)
-                                .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
-                                .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
-                                .initDialogDismissWhenFail(isDialogDismissWhenFail)
-                                .initShowMessage(isShow)
-                                .initShowErrorMessage(isShowError)
-                                .initShowEmptyMessage(isShowEmpty)
-                                .initShowSuccessMessage(isShowSuccess)
-                                .initIDataListenerFilter {
-                                    (it as TDDataListener).setResultCodes(mapOf("count" to BaseHttpConfig.DataParseType.String,"list" to BaseHttpConfig.DataParseType.List))
-                                }
-                                .initIMessageManagerFilter {
-
-                                }
+                                .initMapParams(map as Map<String, Any>?)
+//                        BaseHttpUtils(waitingDialog)
+//                                .initUrl(url.text.toString())
+//                                .initClass(AchievnmentModel::class.java)
+//                                .initDataParseType(BaseHttpConfig.DataParseType.Combination)
+//                                .initDialogDismiss(isDialogDismiss)
+//                                .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
+//                                .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
+//                                .initDialogDismissWhenFail(isDialogDismissWhenFail)
+//                                .initShowMessage(isShow)
+//                                .initShowErrorMessage(isShowError)
+//                                .initShowEmptyMessage(isShowEmpty)
+//                                .initShowSuccessMessage(isShowSuccess)
+//                                .initIDataListenerFilter {
+//                                    (it as TDDataListener).setResultCodes(mapOf("count" to BaseHttpConfig.DataParseType.String,"list" to BaseHttpConfig.DataParseType.List))
+//                                }
+//                                .initIMessageManagerFilter {
+//
+//                                }
                                 .initHttpResultCallBack(object : HttpResultCallBack() {
+
+                                    override fun onEmpty(baseResult: BaseResult?) {
+
+                                    }
+                                    override fun onFail(errorInfo: BaseErrorInfo?) {
+                                        result.text = errorInfo.toString()
+                                    }
                                     override fun onSuccess(baseResult: BaseResult) {
-                                        result.text = baseResult.getResult().resultData
-                                    }
-                                    override fun onEmpty(errorInfo: BaseErrorInfo) {
-                                        result.text = errorInfo.errorMsg
-                                    }
-                                    override fun onFail(errorInfo: BaseErrorInfo) {
-                                        result.text = errorInfo.errorMsg
+                                        result.text = baseResult.getResult().resultAll
                                     }
                                 })
                                 .post()
                     }
                     // Get
                     R.id.radioButton2 -> {
-                        BaseThreadPoolUtil.execute {
-                            BaseHttpUtils(waitingDialog)
+                        BaseThreadPoolUtils.execute {
+                            BaseHttpUtils.create()
                                     .initUrl(url.text.toString())
                                     .initIHttpService(httpService)
                                     .initIDataListener(dataListener)
-                                    .initDialogDismiss(isDialogDismiss)
-                                    .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
-                                    .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
-                                    .initDialogDismissWhenFail(isDialogDismissWhenFail)
-                                    .initShowMessage(isShow)
-                                    .initShowErrorMessage(isShowError)
-                                    .initShowEmptyMessage(isShowEmpty)
-                                    .initShowSuccessMessage(isShowSuccess)
+//                                    .initDialogDismiss(isDialogDismiss)
+//                                    .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
+//                                    .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
+//                                    .initDialogDismissWhenFail(isDialogDismissWhenFail)
+//                                    .initShowMessage(isShow)
+//                                    .initShowErrorMessage(isShowError)
+//                                    .initShowEmptyMessage(isShowEmpty)
+//                                    .initShowSuccessMessage(isShowSuccess)
                                     .initHttpResultCallBack(object : HttpResultCallBack() {
+                                        override fun onEmpty(baseResult: BaseResult?) {
+
+                                        }
+
                                         override fun onSuccess(baseResult: BaseResult) {
                                             var resultStr = baseResult.getResult().result_str
                                             result.text = resultStr
                                         }
                                         override fun onFail(errorInfo: BaseErrorInfo) {
-                                            result.text = errorInfo.errorMsg
+                                            result.text = errorInfo.toString()
                                         }
                                     })
                                     .get()
@@ -280,8 +284,10 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    var postHttpUrl = "http://103.10.3.77:59527/yuyuan-interact/achievement/userAchievement"//"http://www.xiaooo.club:8080/tangdao/api/banner/getBannerByType"
+    var postHttpUrl = "http://hd215.api.yesapi.cn/?s=App.Common_IDCard.Parse"
+    //"http://www.xiaooo.club:8080/tangdao/api/banner/getBannerByType"
     var getHttpUrl = "http://103.10.3.77:59527/yuyuan-resource/user/randPage/261/30"
     var paramsStr = ""
-    var map = mapOf("mobile" to "18260031044")//mapOf("type" to "50")//
+    var map = mapOf("app_key" to "0DDC1C9C13E8A04EC52C0D5F8739EFE1",
+            "id_number" to 411524199205130033)//mapOf("type" to "50")//
 }

@@ -12,7 +12,7 @@ import java.util.List;
  * 解析返回值
  * Created by lixingxing on 2019/4/4.
  */
-public class DataUtil {
+public class BaseDataUtils {
     /**
      * json解析成 List<T>列表对象,解析错误的话 为null
      * @param jsonString

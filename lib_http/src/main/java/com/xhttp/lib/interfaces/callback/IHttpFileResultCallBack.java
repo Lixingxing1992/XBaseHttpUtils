@@ -1,8 +1,7 @@
 package com.xhttp.lib.interfaces.callback;
 
 import com.xhttp.lib.BaseResult;
-import com.xhttp.lib.config.BaseErrorInfo;
-import com.xhttp.lib.config.BaseHttpParams;
+import com.xhttp.lib.model.BaseErrorInfo;
 
 import java.io.File;
 

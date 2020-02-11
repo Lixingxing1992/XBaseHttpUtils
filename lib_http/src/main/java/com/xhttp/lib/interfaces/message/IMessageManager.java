@@ -7,7 +7,7 @@ import android.content.Context;
  * Created by lixingxing on 2019/4/9.
  */
 public interface IMessageManager {
-    void showMessages(Context context,String msg);
-    void showErrorMessages(Context context,String msg);
-    void showEmptyMessages(Context context,String msg);
+    void showMessages(Context context, String msg);
+    void showErrorMessages(Context context, String msg);
+    void showEmptyMessages(Context context, String msg);
 }

@@ -1,34 +1,33 @@
 package com.xhttp.lib.interfaces.data;
 
+
 import com.xhttp.lib.BaseResult;
-import com.xhttp.lib.config.BaseErrorInfo;
-import com.xhttp.lib.config.BaseHttpParams;
+import com.xhttp.lib.model.BaseRequestResult;
+import com.xhttp.lib.model.BaseResultData;
+import com.xhttp.lib.params.BaseHttpParams;
 
-import org.json.JSONException;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 /**
+ * 数据解析工具类
  * Created by lixingxing on 2019/3/26.
  */
-public interface IDataListener {
-    // 先处理一下返回值, 返回的内容应为接下来要解析的主体内容
-    String parseResult(BaseHttpParams baseHttpParams,byte[] bytes) throws Exception;
-    // 解析成列表
-    List parseList(BaseHttpParams baseHttpParams, String resultObj) throws Exception ;
-    // 解析成对象
-    Object parseObject(BaseHttpParams baseHttpParams,String resultObj) throws Exception ;
-    // 解析字符串
-    String parseDefault(BaseHttpParams baseHttpParams,String resultObj) throws Exception ;
-    // 解析组合模式返回值
-    Map<String,Object> parseCombination(BaseHttpParams baseHttpParams, String resultObj) throws Exception ;
+public interface IDataListener<D extends BaseResultData> extends Serializable {
+    // 先处理一下返回值,把返回值封装成约定好的参数实体类（如若没有，可以为string)
+    // 实体类中要包含 resCode
+    @NotNull D parseResult(@NotNull final BaseHttpParams baseHttpParams, @NotNull final String result);
 
-    // 检查数据是否失败  false 成功   true 解析失败
-    boolean isFail(final BaseHttpParams baseHttpParams,final BaseResult baseResult);
-    BaseErrorInfo getFailErrorInfo();
+    // 获取三种结果类型  根据 DataParseType 来调用不同的方法
+    <T> List<T> getList(@NotNull final BaseHttpParams baseHttpParams, @NotNull final D result);
+    <T> T getObject(@NotNull final BaseHttpParams baseHttpParams, @NotNull final D result);
+    String getString(@NotNull final BaseHttpParams baseHttpParams, @NotNull final D result);
 
-    // 检查是否为空数据  false 不为空  true空数据
-    boolean isEmpty(final BaseHttpParams baseHttpParams,final BaseResult baseResult);
-    BaseErrorInfo getEmptyErrorInfo();
+
+    // 根据解析结果判断是否失败
+    boolean isFailResult(@NotNull final BaseHttpParams baseHttpParams, @NotNull D baseResultData, @NotNull BaseResult.Result result);
+
+
 }

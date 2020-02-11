@@ -1,7 +1,6 @@
 package com.xhttp.lib;
 
-import com.xhttp.lib.config.BaseHttpConfig;
-import com.xhttp.lib.config.BaseErrorInfo;
+import com.xhttp.lib.model.BaseErrorInfo;
 import com.xhttp.lib.model.BaseRequestResult;
 
 import java.util.ArrayList;
@@ -13,7 +12,9 @@ import java.util.Map;
  * Created by lixingxing on 2019/3/26.
  */
 public class BaseResult {
-    public BaseResult(){}
+    public BaseResult(){
+        result = new Result();
+    }
 
     // 是否成功
     public boolean success = false;

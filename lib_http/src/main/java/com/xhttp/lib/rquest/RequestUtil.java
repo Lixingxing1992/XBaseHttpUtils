@@ -1,16 +1,22 @@
-package com.xhttp.lib.util;
+package com.xhttp.lib.rquest;
 
-import com.xhttp.lib.BaseResult;
 import com.xhttp.lib.config.BaseHttpConfig;
-import com.xhttp.lib.config.BaseHttpParams;
-import com.xhttp.lib.config.BaseErrorInfo;
-import com.xhttp.lib.interfaces.callback.IHttpFileResultCallBack;
+import com.xhttp.lib.exceptions.BaseHttpUtilsError;
+import com.xhttp.lib.model.BaseErrorInfo;
 import com.xhttp.lib.model.BaseRequestResult;
+import com.xhttp.lib.params.BaseHttpParams;
 
-import org.apache.http.conn.ConnectTimeoutException;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.net.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 import java.util.UUID;
 
@@ -82,6 +88,7 @@ public class RequestUtil {
         return this;
     }
 
+    @NotNull
     public final synchronized BaseRequestResult request(String params, String urlPath) {
         BaseRequestResult baseRequestResult = new BaseRequestResult();
         BaseErrorInfo errorInfo = baseRequestResult.errorInfo;
@@ -89,7 +96,7 @@ public class RequestUtil {
             URL url = new URL(urlPath);
             URLConnection connection = url.openConnection();
             if (connection == null) {
-                throw new RuntimeException("null cannot be cast to non-null type java.net.HttpURLConnection");
+                throw new BaseHttpUtilsError("null cannot be cast to non-null type java.net.HttpURLConnection");
             }
             HttpURLConnection conn = (HttpURLConnection) connection;
             conn.setRequestMethod(requestType);
@@ -123,8 +130,8 @@ public class RequestUtil {
                 if (resultBytes == null || resultBytes.length == 0) {
                     baseRequestResult.isSuccess = false;
                     baseRequestResult.responseCode = 200;
-                    errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpResponseNone;
-                    errorInfo.errorMsg = errorInfo.errorCode.toString();
+                    errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpFail;
+                    errorInfo.errorMsg = "状态码200,但返回值为空";
                     baseRequestResult.errorInfo = errorInfo;
                 } else {
                     baseRequestResult.isSuccess = true;
@@ -133,28 +140,21 @@ public class RequestUtil {
             } else {
                 baseRequestResult.isSuccess = false;
                 errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpErrorCode;
-                errorInfo.errorMsg = String.format(errorInfo.errorCode.toString(), baseRequestResult.responseCode);
+                errorInfo.errorMsg = baseRequestResult.responseCode + "";
                 baseRequestResult.errorInfo = errorInfo;
             }
         } catch (Exception e) {
             baseRequestResult.isSuccess = false;
             baseRequestResult.responseCode = BaseHttpConfig.REQUEST_CODE_ERROR;
-            // TODO 根据不同的异常异常返回不同的结果
             errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpException;
-            if (e instanceof ConnectTimeoutException) {
-                // 网络请求超时
-                errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpExceptionTimeOut;
-            } else {
-            }
             errorInfo.exception = e;
-            errorInfo.errorMsg = errorInfo.getErrorMsg();
             e.printStackTrace();
         }
         return baseRequestResult;
     }
 
     // 同步上传多张文件
-    public final synchronized BaseRequestResult uploadFileByFiles(final List<File> files,  final List<String> fileKeys, final String loadUrl,RequestUtilFileListener requestUtilFileListener) {
+    public final synchronized BaseRequestResult uploadFileByFiles(final List<File> files, final List<String> fileKeys, final String loadUrl, RequestUtilFileListener requestUtilFileListener) {
         if(requestUtilFileListener != null) {
             this.requestUtilFileListener = requestUtilFileListener;
         }
@@ -224,7 +224,7 @@ public class RequestUtil {
                 if (resultBytes == null || resultBytes.length == 0) {
                     baseRequestResult.isSuccess = false;
                     baseRequestResult.responseCode = 200;
-                    errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpResponseNone;
+                    errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpFail;
                     errorInfo.errorMsg = errorInfo.errorCode.toString();
                     baseRequestResult.errorInfo = errorInfo;
                 } else {
@@ -243,14 +243,13 @@ public class RequestUtil {
             // TODO 根据不同的异常异常返回不同的结果
             errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_File_error;
             errorInfo.exception = e;
-            errorInfo.errorMsg = errorInfo.getErrorMsg();
             e.printStackTrace();
         }
         return baseRequestResult;
     }
 
     // 上传单个文件  用于异步上传
-    public final synchronized BaseRequestResult uploadFileByFile(final int postion,final File file, final String fileKey, final String loadUrl, RequestUtilFileListener requestUtilFileListener) {
+    public final synchronized BaseRequestResult uploadFileByFile(final int postion, final File file, final String fileKey, final String loadUrl, RequestUtilFileListener requestUtilFileListener) {
         if(requestUtilFileListener != null) {
             this.requestUtilFileListener = requestUtilFileListener;
         }
@@ -318,7 +317,7 @@ public class RequestUtil {
                 if (resultBytes == null || resultBytes.length == 0) {
                     baseRequestResult.isSuccess = false;
                     baseRequestResult.responseCode = 200;
-                    errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpResponseNone;
+                    errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpFail;
                     errorInfo.errorMsg = errorInfo.errorCode.toString();
                     baseRequestResult.errorInfo = errorInfo;
                 } else {
@@ -337,7 +336,6 @@ public class RequestUtil {
             // TODO 根据不同的异常异常返回不同的结果
             errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_File_error;
             errorInfo.exception = e;
-            errorInfo.errorMsg = errorInfo.getErrorMsg();
             e.printStackTrace();
         }
         return baseRequestResult;

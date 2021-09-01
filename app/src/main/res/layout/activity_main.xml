@@ -186,7 +186,7 @@
                         android:id="@+id/service3"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="TDService" />
+                        android:text="BaseTempHttpService" />
 
                 </RadioGroup>
                 <RadioGroup
@@ -213,7 +213,7 @@
                         android:id="@+id/data3"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="TDDataListener" />
+                        android:text="BaseTempDataListener" />
                 </RadioGroup>
             </LinearLayout>
 

@@ -173,4 +173,8 @@ v1.0-beta15
 >
 >修改优化了 BaseHttpUtils 中的个别方法和参数
 >增加了file文件上传方法等
->
+
+
+v2.0
+> 增加了 示例  拓展的HttpService 和 DataListener     BaseTempDataListener
+>修改优化了调用方法、增加了生命周期监听、增加了kotlin dsl语言支持

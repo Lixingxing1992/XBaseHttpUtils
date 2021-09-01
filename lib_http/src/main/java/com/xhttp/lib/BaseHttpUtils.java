@@ -1,526 +1,604 @@
 package com.xhttp.lib;
 
 import android.app.Dialog;
+import android.app.Fragment;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import android.util.Pair;
 
-import com.xhttp.lib.config.BaseErrorInfo;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+
 import com.xhttp.lib.config.BaseHttpConfig;
-import com.xhttp.lib.config.BaseHttpParams;
-import com.xhttp.lib.impl.data.DefaultDataListener;
-import com.xhttp.lib.impl.file.DefaultFileService;
-import com.xhttp.lib.impl.message.MessageManager;
-import com.xhttp.lib.impl.service.DefaultHttpService;
 import com.xhttp.lib.interfaces.callback.IFileUploadListener;
-import com.xhttp.lib.interfaces.callback.IHttpFileResultCallBack;
 import com.xhttp.lib.interfaces.callback.IHttpResultCallBack;
 import com.xhttp.lib.interfaces.data.IDataListener;
 import com.xhttp.lib.interfaces.data.IDataListenerFilter;
 import com.xhttp.lib.interfaces.file.IFileService;
 import com.xhttp.lib.interfaces.http.IHttpService;
 import com.xhttp.lib.interfaces.http.IHttpServiceFilter;
-import com.xhttp.lib.interfaces.message.IMessageManager;
-import com.xhttp.lib.interfaces.message.IMessageManagerFilter;
 import com.xhttp.lib.model.BaseRequestResult;
-import com.xhttp.lib.util.BaseThreadPoolUtil;
+import com.xhttp.lib.model.BaseResultData;
+import com.xhttp.lib.params.BaseHttpDialogParams;
+import com.xhttp.lib.params.BaseHttpInitParams;
+import com.xhttp.lib.params.BaseHttpMessageParams;
+import com.xhttp.lib.params.BaseHttpParams;
+import com.xhttp.lib.util.BaseHttpCheckUtils;
+import com.xhttp.lib.util.BaseJsonUtils;
+import com.xhttp.lib.util.BaseLogUtils;
+import com.xhttp.lib.util.BaseObjectUtils;
+import com.xhttp.lib.util.BaseThreadPoolUtils;
+
+import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.xhttp.lib.config.BaseHttpConfig.TAG;
-
 /**
- * Created by lixingxing on 2019/3/26.
+ * 网络工具类
+ *
+ * @author Lixingxing
  */
-public final class BaseHttpUtils {
-    // 唯一标识
-    private String tags = "";
-    private static Context contextStatic;
-    // 是否打开Log日志
-    private static boolean openLogStatic = true;
+public class BaseHttpUtils {
+    private static Handler mHandler;
 
-    public static void init(Context context, boolean openLogs) {
-        contextStatic = context;
-        openLogStatic = openLogs;
+    static {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            mHandler = new Handler(Looper.getMainLooper());
+        } else {
+            mHandler = new Handler();
+        }
     }
 
-    private Boolean openLog = null;
+    // 唯一标识
+    private String tags = "";
+    // 全局参数
+    private static BaseHttpInitParams mBaseHttpInitParams;
+    // 请求参数
+    private BaseHttpParams mBaseHttpParams;
+    // 返回值
+    private BaseResult mBaseResult;
 
+    // 测试数据
+    private boolean isTestOpen = false;
+    private String testResult = "";
+
+
+    /**
+     * 获取工具类实例(新实例)
+     */
+    public static BaseHttpUtils create() {
+        return new BaseHttpUtils();
+    }
+    public static BaseHttpUtils create(Dialog dialog) {
+        return new BaseHttpUtils(dialog);
+    }
+    public static BaseHttpUtils create(LifecycleOwner lifecycleOwner,Dialog dialog) {
+        return new BaseHttpUtils(lifecycleOwner,dialog);
+    }
+
+    private void createTag() {
+        tags = UUID.randomUUID().toString();
+    }
+
+    private BaseHttpUtils(Dialog dialog) {
+        this();
+        this.mDialog = dialog;
+    }
+
+    private BaseHttpUtils(LifecycleOwner lifecycleOwner,Dialog dialog) {
+        this();
+        this.lifecycleOwner = lifecycleOwner;
+        this.mDialog = dialog;
+
+        if(lifecycleOwner != null){
+            lifecycleOwner.getLifecycle().addObserver(observer);
+        }
+    }
+
+    private DefaultLifecycleObserver observer = new DefaultLifecycleObserver(){
+        @Override
+        public void onDestroy(@NonNull LifecycleOwner owner) {
+            BaseLogUtils.logE(mBaseHttpParams.tags, mBaseHttpParams.openLog,
+                    "调用者页面关闭");
+            if(mDialog != null){
+                mDialog.dismiss();
+            }
+            breakOff = true;
+            owner.getLifecycle().removeObserver(observer);
+        }
+    };
+
+    private BaseHttpUtils() {
+        BaseHttpCheckUtils.checkInit(mBaseHttpInitParams);
+        createTag();
+        mBaseHttpParams = new BaseHttpParams(mBaseHttpInitParams);
+        mBaseHttpParams.tags = BaseHttpConfig.TAGS + "_" + tags;
+        BaseLogUtils.logE(mBaseHttpParams.tags, mBaseHttpParams.openLog,
+                "此次请求开始");
+    }
+
+    /*********************************** 初始化参数 ************************************/
+    /**
+     * 初始化方法
+     * 建议放在 Application中
+     */
+    public static void init(BaseHttpInitParams baseHttpInitParams) {
+        BaseHttpCheckUtils.checkInit(baseHttpInitParams);
+        mBaseHttpInitParams = baseHttpInitParams;
+    }
+
+    /*********************************** 设置生命周期观察者 ************************************/
+    private LifecycleOwner lifecycleOwner;
+    private boolean breakOff = false;
+
+    /*********************************** 设置控制参数 **********************************/
+    /**
+     * 设置log开关
+     *
+     * @param openLog
+     * @return
+     */
     public BaseHttpUtils initOpenLog(boolean openLog) {
-        this.openLog = openLog;
+        mBaseHttpParams.openLog = openLog;
         return this;
     }
 
-    // 检查Log开关
-    public boolean checkLog() {
-        if (openLog == null) {
-            return openLogStatic;
-        }
-        return openLog;
-    }
-
-    // 发送请求封装类
-    private BaseHttpParams baseHttpParams;
-    // 返回值封装类
-    private BaseResult baseResult;
-
-    public BaseHttpUtils() {
-        this(new BaseHttpParams());
-    }
-
-    public BaseHttpUtils(Dialog dialog) {
-        this(new BaseHttpParams());
-        this.dialog = dialog;
-    }
-
-    private BaseHttpUtils(BaseHttpParams baseHttpParams) {
-        if (contextStatic == null) {
-            throw new RuntimeException("请在application中调用init(Context context,boolean openLogs)方法，并且context!=null");
-        }
-        this.baseHttpParams = baseHttpParams;
-        this.baseResult = new BaseResult();
-
-        tags = UUID.randomUUID().toString();
-//        tags = System.currentTimeMillis() + "";
-        this.baseHttpParams.tags = tags;
-        if (iHttpServiceStatic == null) {
-            // 默认
-            iHttpServiceStatic = DefaultHttpService.class;
-        }
-        if (iDataListenerStatic == null) {
-            // 默认
-            iDataListenerStatic = DefaultDataListener.class;
-        }
-        if (iMessageManagerStatic == null) {
-            // 默认
-            iMessageManagerStatic = MessageManager.class;
-        }
-        if (iFileServiceStatic == null) {
-            // 默认
-            iFileServiceStatic = DefaultFileService.class;
-        }
-        if(iFileDataStatic == null){
-            // 默认
-            iFileDataStatic = DefaultFileService.class;
-        }
-    }
-
-    /************************ 请求参数 ********************************/
     /**
-     * 全局的 请求工具类 iHttpServiceStatic 和 数据解析类 iDataListenerStatic
-     * 会被 initIHttpService 和 initIDataListener中设置的值覆盖掉
+     * 设置log标签
+     *
+     * @param tag
+     * @return
      */
-    public static Class iHttpServiceStatic;
-    public static Class iDataListenerStatic;
-    public static Class iFileServiceStatic;
-    public static Class iFileDataStatic;
-
-    private IHttpService iHttpServiceCurr;
-    private IDataListener iDataListenerCurr;
-    private IFileService iFileServiceCurr;
-    private IDataListener iFileDataListenerCurr;
-
-    // 初始化设置 全局的 请求工具类 和 数据解析类
-    public static void init(Class iHttpServiceStatics, Class iDataListenerStatics) {
-        if (iHttpServiceStatics != null && IHttpService.class.isAssignableFrom(iHttpServiceStatics)) {
-            iHttpServiceStatic = iHttpServiceStatics;
-        } else if (iHttpServiceStatics != null) {
-            throw new RuntimeException("初始化请求工具类和数据解析类时类型错误");
-        }
-        if (iDataListenerStatics != null && IDataListener.class.isAssignableFrom(iDataListenerStatics)) {
-            iDataListenerStatic = iDataListenerStatics;
-        } else if (iDataListenerStatics != null) {
-            throw new RuntimeException("初始化请求工具类和数据解析类时类型错误");
-        }
-    }
-
-
-    // 初始化设置 全局的 请求工具类 和 数据解析类(如果没有调用，则会使用默认的)
-    public static void initFile(Class iHttpServiceStatics, Class iDataListenerStatics) {
-        if (iHttpServiceStatics != null && IFileService.class.isAssignableFrom(iHttpServiceStatics)) {
-            iFileServiceStatic = iHttpServiceStatics;
-        } else if (iHttpServiceStatics != null) {
-            throw new RuntimeException("初始化请求工具类和数据解析类时类型错误");
-        }
-        if (iDataListenerStatics != null && IDataListener.class.isAssignableFrom(iDataListenerStatics)) {
-            iFileDataStatic = iDataListenerStatics;
-        } else if (iDataListenerStatics != null) {
-            throw new RuntimeException("初始化请求工具类和数据解析类时类型错误");
-        }
+    public BaseHttpUtils initTags(String tag) {
+        mBaseHttpParams.tags = tag;
+        return this;
     }
 
     /**
-     * 针对 本次请求的 请求工具类 iHttpService 和 数据解析类 iDataListener
-     * 会覆盖全局的 请求工具类 iHttpServiceStatic 和 数据解析类 iDataListenerStatic
+     *  设置超时时间
+     * @param time
+     * @return
      */
-    // 网络请求工具类处理
-    private IHttpServiceFilter iHttpServiceFilter;
-    // 数据解析工具类处理
-    private IDataListenerFilter iDataListenerFilter;
+    public BaseHttpUtils initReadTimeOut(int time){
+        mBaseHttpParams.timeout_read = time;
+        return this;
+    }
+    /**
+     *  设置超时时间
+     * @param time
+     * @return
+     */
+    public BaseHttpUtils initTimeOutConect(int time){
+        mBaseHttpParams.timeout_connect = time;
+        return this;
+    }
+
+
+
+    /*********************************** 设置加载框 ************************************/
+    private Dialog mDialog;
+    private BaseHttpDialogParams mBaseHttpDialogParams = new BaseHttpDialogParams();
+    public BaseHttpUtils initDialog(Dialog dialog){
+        this.mDialog = dialog;
+        return this;
+    }
+    // 隐藏加载框
+    private void dismissDialog(int type){
+        if(type == BaseHttpConfig.TYPE_SUCCESS){
+            // 成功
+            if(!mBaseHttpDialogParams.isDismissDialog() || !mBaseHttpDialogParams.isDismissDialogWhenSuccess()){
+                return;
+            }
+        }else if(type == BaseHttpConfig.TYPE_FAIL){
+            // 失败
+            if(!mBaseHttpDialogParams.isDismissDialog() || !mBaseHttpDialogParams.isDismissDialogWhenFail()){
+                return;
+            }
+        }
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if(mDialog!=null && mDialog.isShowing()) {
+                    mDialog.dismiss();
+                }
+            }
+        });
+    }
+
+    /**
+     * 设置dialog处理设置
+     *
+     * @param baseHttpDialogParams
+     * @return
+     */
+    public BaseHttpUtils initDialogDismiss(@NotNull BaseHttpDialogParams baseHttpDialogParams){
+        if(baseHttpDialogParams != null){
+            this.mBaseHttpDialogParams = baseHttpDialogParams;
+        }
+        return this;
+    }
+
+    /**
+     * 最后是否隐藏加载框
+     * @param dismissDialog
+     * @return
+     */
+    public BaseHttpUtils initDismissDialog(boolean dismissDialog) {
+        mBaseHttpDialogParams.setDismissDialog(dismissDialog);
+        return this;
+    }
+    /**
+     * 请求成功的时候是否隐藏加载框
+     * @param dismissDialogWhenSuccess
+     * @return
+     */
+    public BaseHttpUtils initDismissDialogWhenSuccess(boolean dismissDialogWhenSuccess) {
+        mBaseHttpDialogParams.setDismissDialogWhenSuccess(dismissDialogWhenSuccess);
+        return this;
+    }
+    /**
+     * 请求失败的时候是否隐藏加载框
+     * @param dismissDialogWhenFail
+     * @return
+     */
+    public BaseHttpUtils initDismissDialogWhenFail(boolean dismissDialogWhenFail) {
+        mBaseHttpDialogParams.setDismissDialogWhenFail(dismissDialogWhenFail);
+        return this;
+    }
+
+
+    /*********************************** 设置弹窗提示 **************************/
+    private BaseHttpMessageParams mBaseHttpMessageParams = new BaseHttpMessageParams();
+    public BaseHttpUtils initShowMessage(@NotNull BaseHttpMessageParams baseHttpMessageParams){
+        if(baseHttpMessageParams != null){
+            this.mBaseHttpMessageParams = baseHttpMessageParams;
+        }
+        return this;
+    }
+    public BaseHttpUtils initShowEmptyMessage(){
+        return this;
+    }
+
+
+    /*********************************** 设置请求和解析工具类 **************************/
+    /**
+     * 针对 本次请求的 请求工具类 IHttpService 和 数据解析类 IDataListener
+     * 会覆盖全局的 请求工具类 IHttpService 和 数据解析类 IDataListener
+     */
+    // 请求工具类处理
+    private IHttpService mHttpService;
+    private IDataListener mDataListener;
+    private IFileService mFileService;
+
+    // 解析工具类处理
+    private IHttpServiceFilter mHttpServiceFilter;
+    private IDataListenerFilter mDataListenerFilter;
 
     // 设置 网络请求工具类
     public BaseHttpUtils initIHttpService(IHttpService iHttpService) {
-        this.iHttpServiceCurr = iHttpService;
+        this.mHttpService = iHttpService;
         return this;
     }
 
     // 对设置好的 IHttpService 进行处理
     public BaseHttpUtils initIHttpServiceFilter(IHttpServiceFilter iHttpServiceFilter) {
-        this.iHttpServiceFilter = iHttpServiceFilter;
+        this.mHttpServiceFilter = iHttpServiceFilter;
         return this;
     }
 
     // 设置 数据解析工具类
     public BaseHttpUtils initIDataListener(IDataListener iDataListener) {
-        this.iDataListenerCurr = iDataListener;
+        this.mDataListener = iDataListener;
         return this;
     }
 
     // 对设置好的  IDataListener 进行处理
     public BaseHttpUtils initIDataListenerFilter(IDataListenerFilter iDataListenerFilter) {
-        this.iDataListenerFilter = iDataListenerFilter;
+        this.mDataListenerFilter = iDataListenerFilter;
         return this;
     }
 
+    public BaseHttpUtils initIFileService(IFileService mFileService){
+        this.mFileService = mFileService;
+        return this;
+    }
+
+
+    /*********************************** 设置参数 ************************************/
     /**
      * 设置请求路径 url
      *
      * @param url
      */
     public BaseHttpUtils initUrl(String url) {
-        baseHttpParams.url = url;
+        mBaseHttpParams.url = url;
         return this;
     }
 
-    // initParams 只针对 post请求,get请求不处理params
+
+    /**
+     * 设置 header请求参数
+     * initHeaderParams(key,value,key,value....)
+     * @param params
+     */
+    public BaseHttpUtils initHeaderParams(Object... params) {
+        mBaseHttpParams.headerParamsList.clear();
+        if (params.length > 1) {
+            for (int i = 0; i < params.length; i += 2) {
+                mBaseHttpParams.headerParamsList.add(new Pair<String, Object>((String) params[i], params[i + 1]));
+            }
+        }
+        return this;
+    }
 
     /**
      * 设置请求参数1 params
      * initParams(key,value,key,value....)
+     * initParams 只针对 post请求,get请求不处理params
      *
      * @param params
      */
     public BaseHttpUtils initParams(Object... params) {
-        baseHttpParams.params = params;
+        mBaseHttpParams.paramsList.clear();
+        if (params.length > 1) {
+            for (int i = 0; i < params.length; i += 2) {
+                mBaseHttpParams.paramsList.add(new Pair<String, Object>((String) params[i], params[i + 1]));
+            }
+        }
         return this;
     }
 
     /**
      * 设置请求参数2 params
-     * key=value&key=value
-     *
-     * @param params
-     */
-    public BaseHttpUtils initParams(String params) {
-        baseHttpParams.params = params;
-        return this;
-    }
-
-    /**
-     * 设置请求参数 params
      * Map参数
      *
      * @param params
      */
-    public BaseHttpUtils initParams(Map params) {
-        baseHttpParams.params = params;
+    public BaseHttpUtils initMapParams(Map<String, Object> params) {
+        if (params != null) {
+            mBaseHttpParams.paramsList.clear();
+            for (String s : params.keySet()) {
+                mBaseHttpParams.paramsList.add(new Pair<String, Object>((String) s, params.get(s)));
+            }
+        }
         return this;
     }
 
-    // 可以拓展
-//    public BaseHttpUtils initJsonParams(String json){}
-
     /**
-     * 设置请求方式 RequestType   post  get ...
+     * 设置请求参数3 params
+     * List<Pair>参数
      *
-     * @param type
+     * @param params
      */
-    public BaseHttpUtils initRequestType(BaseHttpConfig.RequestType type) {
-        baseHttpParams.request_type = type;
+    public BaseHttpUtils initListParams(List<Pair<String, Object>> params) {
+        if (params != null) {
+            mBaseHttpParams.paramsList.clear();
+            mBaseHttpParams.paramsList.addAll(params);
+        }
         return this;
     }
 
     /**
-     * 设置超时时间
+     * 设置请求参数3 params
+     * List<Pair>参数
      *
-     * @param timeOut
+     * @param params
      */
-    public BaseHttpUtils initConnectTimeOut(int timeOut) {
-        baseHttpParams.timeout_connect = timeOut;
+    public BaseHttpUtils initJsonParams(String params) {
+        if (params != null) {
+            try {
+                JSONObject jsonObject = new JSONObject(params);
+                mBaseHttpParams.paramsList.clear();
+                Iterator<String> keys = jsonObject.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    Object value = jsonObject.get(key);
+                    mBaseHttpParams.paramsList.add(new Pair(key, value));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
         return this;
     }
-
-    public BaseHttpUtils initReadTimeOut(int timeOut) {
-        baseHttpParams.timeout_read = timeOut;
-        return this;
-    }
-
-    public BaseHttpUtils initTimeOut(int timeOut) {
-        baseHttpParams.timeout_connect = timeOut;
-        baseHttpParams.timeout_read = timeOut;
-        return this;
-    }
-
-
-    /************************返回值********************************/
 
     /**
-     * 设置返回值 解析模式
+     * 设置请求参数4 params
+     * List<Pair>参数
+     *
+     * @param params
+     */
+    public BaseHttpUtils initObjectParams(Object params) {
+        if (params != null) {
+            try {
+                JSONObject jsonObject =  new JSONObject(BaseJsonUtils.getJson(params));
+                mBaseHttpParams.paramsList.clear();
+                Iterator<String> keys = jsonObject.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    Object value = jsonObject.get(key);
+                    mBaseHttpParams.paramsList.add(new Pair(key, value));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return this;
+    }
+
+    /**
+     * 添加参数  注意 调用了这个方法以后,不可以再调用其他的initParams方法,不然此方法设置的参数将无效
+     *
+     * @param key
+     * @param value
+     * @return
+     */
+    public BaseHttpUtils addParams(String key, Object value) {
+        mBaseHttpParams.paramsList.add(new Pair<String, Object>(key, value));
+        return this;
+    }
+
+    /**
+     * 设置 返回值解析类型
      *
      * @param dataParseType
+     * @return
      */
     public BaseHttpUtils initDataParseType(BaseHttpConfig.DataParseType dataParseType) {
-        baseHttpParams.dataParseType = dataParseType;
+        mBaseHttpParams.dataParseType = dataParseType;
         return this;
     }
 
     /**
-     * 设置返回值 解析类型
+     * 请求提交类型
      *
-     * @param tClass
+     * @param requestType
+     * @return
      */
-    public BaseHttpUtils initClass(Class tClass) {
-        baseHttpParams.aClass = tClass;
-        return this;
-    }
-
-
-    /************************ 其他设置 ********************************/
-
-    /**
-     * 请求回调
-     */
-    IHttpResultCallBack iResultCallBack;
-
-    public BaseHttpUtils initHttpResultCallBack(IHttpResultCallBack iResultCallBack) {
-        this.iResultCallBack = iResultCallBack;
+    public BaseHttpUtils initRequestType(BaseHttpConfig.RequestType requestType) {
+        mBaseHttpParams.request_type = requestType;
         return this;
     }
 
     /**
-     * 请求回调提示语句工具类
-     */
-    static Class iMessageManagerStatic;
-
-    public static void init(Class iMessageManagerStatics) {
-        if (iMessageManagerStatics != null && IMessageManager.class.isAssignableFrom(iMessageManagerStatics)) {
-            iMessageManagerStatic = iMessageManagerStatics;
-        } else if (iMessageManagerStatics != null) {
-            throw new RuntimeException("初始化提示语句工具类时类型错误");
-        }
-    }
-
-    IMessageManager iMessageManager;
-    IMessageManagerFilter iMessageManagerFilter;
-
-    public BaseHttpUtils initIMessageManager(IMessageManager iMessageManager) {
-        this.iMessageManager = iMessageManager;
-        return this;
-    }
-
-    public BaseHttpUtils initIMessageManagerFilter(IMessageManagerFilter iMessageManagerFilter) {
-        this.iMessageManagerFilter = iMessageManagerFilter;
-        return this;
-    }
-
-    /**
-     * 设置是否显示提示语句 默认显示
-     */
-    boolean isShowMessage = true;
-
-    public BaseHttpUtils initShowMessage(boolean isShowMessage) {
-        this.isShowMessage = isShowMessage;
-        return this;
-    }
-
-    /**
-     * 设置是否显示错误时提示语句 默认显示
-     */
-    boolean isShowErrorMessage = true;
-
-    public BaseHttpUtils initShowErrorMessage(boolean isShowErrorMessage) {
-        this.isShowErrorMessage = isShowErrorMessage;
-        return this;
-    }
-
-    String errorMsg = "";
-
-    public BaseHttpUtils initErrorMsg(String errorMsg) {
-        this.errorMsg = errorMsg;
-        return this;
-    }
-
-    /**
-     * 设置是否显示空数据时提示语句 默认null 列表模式下不显示
-     * 如果列表模式下想设置显示 可调用此方法 initShowEmptyMessage(true)
-     */
-    Boolean isShowEmptyMessage = null;
-
-    public BaseHttpUtils initShowEmptyMessage(Boolean isShowEmptyMessage) {
-        this.isShowEmptyMessage = isShowEmptyMessage;
-        return this;
-    }
-
-    String emptyMsg = "";
-
-    public BaseHttpUtils initEmptyMsg(String emptyMsg) {
-        this.emptyMsg = emptyMsg;
-        return this;
-    }
-
-    /**
-     * 设置是否显示正确时提示语句 默认不显示
-     */
-    boolean isShowSuccessMessage = false;
-
-    public BaseHttpUtils initShowSuccessMessage(boolean isShowSuccessMessage) {
-        this.isShowSuccessMessage = isShowSuccessMessage;
-        return this;
-    }
-
-    String successMsg = "请求成功";
-
-    public BaseHttpUtils initSuccessMsg(String successMsg) {
-        this.successMsg = successMsg;
-        return this;
-    }
-
-    /**
-     * 设置加载提示框
+     * 返回值编码类型
      *
-     * @param dialog
+     * @param request_contentType
+     * @return
      */
-    Dialog dialog;
+    public BaseHttpUtils initRequestDataType(BaseHttpConfig.RequestContentType request_contentType) {
+        mBaseHttpParams.request_contentType = request_contentType;
+        return this;
+    }
 
-    public BaseHttpUtils initDialog(Dialog dialog) {
-        this.dialog = dialog;
+
+    /**
+     * 返回值 class
+     * @param clz
+     * @return
+     */
+    public BaseHttpUtils initClass(Class clz){
+        mBaseHttpParams.aClass = clz;
         return this;
     }
 
     /**
-     * 设置 dialog是否消失 默认最后必须消失
+     * 设置是否使用测试数据
+     * @param isOpenTest
+     * @return
+     */
+    public BaseHttpUtils initTest(boolean isOpenTest){
+        this.isTestOpen = isOpenTest;
+        return this;
+    }
+    /**
+     * 设置测试数据
+     * @param object
+     * @return
+     */
+    public BaseHttpUtils initTestResult(String object){
+        this.testResult = object;
+        return this;
+    }
+
+
+    /*********************************** 设置回调 ************************************/
+    private IHttpResultCallBack mHttpResultCallBack;
+    private IFileUploadListener mFileUploadListener;
+
+    /**
+     * 设置 网络请求回调
      *
-     * @param isDialogDismiss
+     * @param mHttpResultCallBack
+     * @return
      */
-    boolean isDialogDismiss = true;
-
-    public BaseHttpUtils initDialogDismiss(boolean isDialogDismiss) {
-        this.isDialogDismiss = isDialogDismiss;
+    public BaseHttpUtils initHttpResultCallBack(IHttpResultCallBack mHttpResultCallBack) {
+        this.mHttpResultCallBack = mHttpResultCallBack;
         return this;
     }
-
     /**
-     * 设置 dialog请求成功时是否消失 默认最后必须消失
+     * 设置 文件上传回调
      *
-     * @param isDialogDismiss
+     * @param mFileUploadListener
+     * @return
      */
-    boolean isDialogDismissWhenSuccess = true;
-
-    public BaseHttpUtils initDialogDismissWhenSuccess(boolean isDialogDismissWhenSuccess) {
-        this.isDialogDismissWhenSuccess = isDialogDismissWhenSuccess;
+    public BaseHttpUtils initIFileUploadListener(IFileUploadListener mFileUploadListener){
+        this.mFileUploadListener = mFileUploadListener;
         return this;
     }
 
+
+
+    /*********************************** 开始请求 ************************************/
     /**
-     * 设置 dialog请求结果是空数据是否消失 默认最后必须消失
-     *
-     * @param isDialogDismiss
+     * 请求方法
      */
-    boolean isDialogDismissWhenEmpty = true;
-
-    public BaseHttpUtils initDialogDismissWhenEmpty(boolean isDialogDismissWhenEmpty) {
-        this.isDialogDismissWhenEmpty = isDialogDismissWhenEmpty;
-        return this;
-    }
-
-    /**
-     * 设置 dialog请求失败时是否消失 默认最后必须消失
-     *
-     * @param isDialogDismiss
-     */
-    boolean isDialogDismissWhenFail = true;
-
-    public BaseHttpUtils initDialogDismissWhenFail(boolean isDialogDismissWhenFail) {
-        this.isDialogDismissWhenFail = isDialogDismissWhenFail;
-        return this;
-    }
-
-    public BaseHttpUtils dismissDialog() {
-        if (null != dialog && dialog.isShowing()) {
-            dialog.dismiss();
-        }
-        return this;
-    }
-
-
-    /**
-     * 发送请求
-     */
-    private final Handler mHandler = new Handler(Looper.getMainLooper());
-
-
-    // post
-    public void postList(Class clz) {
-        baseHttpParams.aClass = clz;
-        postList();
-    }
-
-    public void postList() {
-        baseHttpParams.dataParseType = BaseHttpConfig.DataParseType.List;
-        post();
-    }
-
-    public void postObject(Class clz) {
-        baseHttpParams.aClass = clz;
-        postObject();
-    }
-
-    public void postObject() {
-        baseHttpParams.dataParseType = BaseHttpConfig.DataParseType.Object;
-        post();
-    }
-
-    public void post() {
-        baseHttpParams.request_type = BaseHttpConfig.RequestType.POST;
-        request();
-    }
-
-    // get
-    public void getList(Class clz) {
-        baseHttpParams.aClass = clz;
-        getList();
-    }
-
-    public void getList() {
-        baseHttpParams.dataParseType = BaseHttpConfig.DataParseType.List;
-        get();
-    }
-
-    public void getObject(Class clz) {
-        baseHttpParams.aClass = clz;
-        getObject();
-    }
-
-    public void getObject() {
-        baseHttpParams.dataParseType = BaseHttpConfig.DataParseType.Object;
-        get();
-    }
-
     public void get() {
-        baseHttpParams.request_type = BaseHttpConfig.RequestType.GET;
+        mBaseHttpParams.request_type = BaseHttpConfig.RequestType.GET;
+        request();
+    }
+    public void getList() {
+        mBaseHttpParams.dataParseType = BaseHttpConfig.DataParseType.List;
+        get();
+    }
+    public void getObject() {
+        mBaseHttpParams.dataParseType = BaseHttpConfig.DataParseType.Object;
+        get();
+    }
+    public void getList(Class clz) {
+        mBaseHttpParams.aClass = clz;
+        mBaseHttpParams.dataParseType = BaseHttpConfig.DataParseType.List;
+        get();
+    }
+    public void getObject(Class clz) {
+        mBaseHttpParams.aClass = clz;
+        mBaseHttpParams.dataParseType = BaseHttpConfig.DataParseType.Object;
+        get();
+    }
+
+    public void postList(){
+        mBaseHttpParams.dataParseType = BaseHttpConfig.DataParseType.List;
+        post();
+    }
+    public void postObject(){
+        mBaseHttpParams.dataParseType = BaseHttpConfig.DataParseType.Object;
+        post();
+    }
+    public void postList(Class clz) {
+        mBaseHttpParams.aClass = clz;
+        mBaseHttpParams.dataParseType = BaseHttpConfig.DataParseType.List;
+        post();
+    }
+    public void postObject(Class clz) {
+        mBaseHttpParams.aClass = clz;
+        mBaseHttpParams.dataParseType = BaseHttpConfig.DataParseType.Object;
+        post();
+    }
+    public void post() {
+        mBaseHttpParams.request_type = BaseHttpConfig.RequestType.POST;
         request();
     }
 
+    public void put() {
+        mBaseHttpParams.request_type = BaseHttpConfig.RequestType.PUT;
+        request();
+    }
 
-    // 网络请求要在线程中进行
+    /**
+     * 请求方法
+     */
     public void request() {
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            BaseThreadPoolUtil.execute(new Runnable() {
+            BaseThreadPoolUtils.execute(new Runnable() {
                 @Override
                 public void run() {
                     requests();
@@ -531,550 +609,253 @@ public final class BaseHttpUtils {
         }
     }
 
-    // 请求方法
-    private void requests() {
+    public void requests() {
+        mBaseResult = new BaseResult();
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                if (iResultCallBack != null) {
-                    iResultCallBack.onBeforeRequest(baseHttpParams);
+                if (mHttpResultCallBack != null) {
+                    mHttpResultCallBack.onBeforeRequest(mBaseHttpParams);
                 }
             }
         });
-        // log开关设置
-        baseHttpParams.openLog = checkLog();
-        // 设置空数据时提示语句是否显示, 如果调用过 initShowEmptyMessage方法,则该方法不调用
-        settingEmptyMessage();
-        // messageManager设置
-        settingMessageManager();
-        // 检查一些基本设置
-        if (!settingDefaultParams()) {
-            return;
-        }
-        if (!settingHttpServiceAndDataListener()) {
-            return;
-        }
-        if (!callHttpRequest()) {
-            return;
-        }
-        if (!callDataParse()) {
-            return;
-        }
-
-        if (baseHttpParams.openLog) {
-            Log.e(BaseHttpConfig.TAG, tags + ": 请求完成,返回成功");
-        }
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (isDialogDismiss && isDialogDismissWhenSuccess) {
-                    dismissDialog();
-                }
-                if (iMessageManager != null && isShowMessage && isShowSuccessMessage) {
-                    iMessageManager.showMessages(contextStatic, "".equals(successMsg) ? baseResult.errorInfo.errorMsg : successMsg);
-                }
-                if (iResultCallBack != null) {
-                    iResultCallBack.onSuccess(baseResult);
-                    iResultCallBack.onFinal(baseResult);
-                }
-            }
-        });
-    }
-
-    // 设置空数据时提示语句是否显示, 如果调用过 initShowEmptyMessage方法,则该方法不调用
-    private void settingEmptyMessage() {
-        if (isShowEmptyMessage == null) {
-            // 默认模式 列表模式下不显示
-            if (baseHttpParams.dataParseType == BaseHttpConfig.DataParseType.List) {
-                isShowEmptyMessage = false;
-            } else {
-                isShowEmptyMessage = true;
-            }
-        }
-    }
-
-    // messageManager设置
-    private void settingMessageManager() {
+        /*
+         * 检查和初始化
+         */
         try {
-            iMessageManager = iMessageManager == null ? (IMessageManager) iMessageManagerStatic.newInstance() : iMessageManager;
-            if (iMessageManagerFilter != null && iMessageManager != null) {
-                iMessageManagerFilter.filterIMessageManager(iMessageManager);
-            }
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        }
-    }
+            // 1.检查请求参数是否设置正确
+            BaseHttpCheckUtils.checkRequest(mBaseHttpParams);
 
-    private boolean settingDefaultParams() {
-        if (baseHttpParams.aClass == null && baseHttpParams.dataParseType != BaseHttpConfig.DataParseType.String) {
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, tags + ":错误描述_ 请设置好需要解析的对象类型");
+            // 2.检查和初始化 请求工具类
+            if (mHttpService == null && mBaseHttpInitParams.mHttpService != null) {
+                mHttpService = BaseObjectUtils.clone(mBaseHttpInitParams.mHttpService);
             }
-            baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
-            baseResult.errorInfo.errorMsg = "请设置好需要解析的对象类型";
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iResultCallBack != null) {
-                        iResultCallBack.onFailUse(baseResult.errorInfo);
-                        iResultCallBack.onFail(baseResult.errorInfo);
-                        iResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        return true;
-    }
+            // 3.检查和初始化 解析工具类
+            if (mDataListener == null && mBaseHttpInitParams.mDataListener != null) {
+                mDataListener = BaseObjectUtils.clone(mBaseHttpInitParams.mDataListener);
+            }
 
+            // 4.检查和初始化 请求工具类 过滤器
+            if (mHttpServiceFilter == null && mBaseHttpInitParams.mHttpServiceFilter != null) {
+                mHttpServiceFilter = BaseObjectUtils.clone(mBaseHttpInitParams.mHttpServiceFilter);
+            }
+            // 4.1 过滤设置 请求工具类
+            if (mHttpServiceFilter != null && mHttpService != null) {
+                mHttpService = mHttpServiceFilter.filterIHttpService(mHttpService);
+            }
 
-    // 根据传入的值 初始化 IHttpService 和 IDataListener
-    private boolean settingHttpServiceAndDataListener() {
-        /******************** 发送前检查 ***********************/
-        baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
-        try {
-            // 获取当前的 数据请求工具类
-            iHttpServiceCurr = iHttpServiceCurr == null ? (IHttpService) (iHttpServiceStatic == null ? null : iHttpServiceStatic.newInstance()) : iHttpServiceCurr;
-            // 获取当前的 数据解析工具类
-            iDataListenerCurr = iDataListenerCurr == null ? (IDataListener) (iDataListenerStatic == null ? null : iDataListenerStatic.newInstance()) : iDataListenerCurr;
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        }
-        // 检查调用方式是否正确
-        if ((iHttpServiceCurr == null || iDataListenerCurr == null)) {
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, tags + ": 请先初始化设置好请求和解析工具类");
+            // 5.检查和初始化 解析工具类  过滤器
+            if (mDataListenerFilter == null && mBaseHttpInitParams.mDataListenerFilter != null) {
+                mDataListenerFilter = BaseObjectUtils.clone(mBaseHttpInitParams.mDataListenerFilter);
             }
-            baseResult.errorInfo.errorMsg = "请先初始化设置好请求和解析工具类";
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iResultCallBack != null) {
-                        iResultCallBack.onFailUse(baseResult.errorInfo);
-                        iResultCallBack.onFail(baseResult.errorInfo);
-                        iResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        } else {
-            if (iHttpServiceFilter != null && iHttpServiceCurr != null) {
-                iHttpServiceFilter.filterIHttpService(iHttpServiceCurr);
+            // 5.1 过滤设置 解析工具类
+            if (mDataListenerFilter != null && mDataListener != null) {
+                mDataListener = mDataListenerFilter.filterIDataListener(mDataListener);
             }
-            if (iDataListenerFilter != null && iDataListenerCurr != null) {
-                iDataListenerFilter.filterIDataListener(iDataListenerCurr);
-            }
-            // filterIHttpService 和 filterIDataListener 以后 再做一次非空判断
-            if ((iHttpServiceCurr == null || iDataListenerCurr == null)) {
-                if (baseHttpParams.openLog) {
-                    Log.e(BaseHttpConfig.TAG, tags + ": filterIHttpService 和 filterIDataListener 方法不能设置参数为null");
-                }
-                baseResult.errorInfo.errorMsg = "filterIHttpService 和 filterIDataListener 方法不能设置参数为null";
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (isDialogDismiss && isDialogDismissWhenFail) {
-                            dismissDialog();
-                        }
-                        if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                            iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                        }
-                        if (iResultCallBack != null) {
-                            iResultCallBack.onFailUse(baseResult.errorInfo);
-                            iResultCallBack.onFail(baseResult.errorInfo);
-                            iResultCallBack.onFinal(baseResult);
-                        }
-                    }
-                });
-                return false;
-            }
-            return true;
-        }
-    }
-
-    // 发送请求
-    private boolean callHttpRequest() {
-        /******************** 发送请求 ***********************/
-        if (baseHttpParams.openLog) {
-            Log.e(BaseHttpConfig.TAG, tags + ": 开始发送网络请求...");
-        }
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (iResultCallBack != null) {
-                    iResultCallBack.onRequest(baseHttpParams);
-                }
-            }
-        });
-        if ("".equals(baseHttpParams.url) || null == baseHttpParams.url) {
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, tags + ":错误描述_ url不能为空");
-            }
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    baseResult.errorInfo.errorMsg = "url不能为空";
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iResultCallBack != null) {
-                        iResultCallBack.onFailUse(baseResult.errorInfo);
-                        iResultCallBack.onFail(baseResult.errorInfo);
-                        iResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        Object params = iHttpServiceCurr.parseParams(baseHttpParams);
-        if (params == null) {
-            params = "";
-        }
-        baseHttpParams.params = params;
-
-        final BaseRequestResult baseRequestResult = iHttpServiceCurr.request(baseHttpParams);
-        if (baseRequestResult == null || !baseRequestResult.checkResult()) {
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, tags + ":错误描述_ IHttpService的request方法中 返回值BaseRequestResult不符合规定");
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    BaseErrorInfo baseErrorInfos = new BaseErrorInfo();
-                    baseErrorInfos.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
-                    baseErrorInfos.errorMsg = "IHttpService的request方法中 返回值BaseRequestResult不符合规定";
-                    baseResult.errorInfo = baseErrorInfos;
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iResultCallBack != null) {
-                        iResultCallBack.onFailRequest(baseErrorInfos);
-                        iResultCallBack.onFail(baseErrorInfos);
-                        iResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        baseResult.baseRequestResult = baseRequestResult;
-        if (!baseRequestResult.isSuccess) {
-            baseResult.success = false;
-            baseResult.errorInfo = baseRequestResult.errorInfo;
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iResultCallBack != null) {
-                        iResultCallBack.onFailRequest(baseResult.errorInfo);
-                        iResultCallBack.onFail(baseResult.errorInfo);
-                        iResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        baseResult.baseRequestResult.isSuccess = true;
-        return true;
-    }
-
-    // 数据解析
-    private boolean callDataParse() {
-        /******************** 解析返回值 ***********************/
-        if (baseHttpParams.openLog) {
-            Log.e(BaseHttpConfig.TAG, tags + ": 开始解析返回值...");
-        }
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (iResultCallBack != null) {
-                    iResultCallBack.onBeforeDataParse(baseHttpParams, baseResult);
-                }
-            }
-        });
-        byte[] bytes = baseResult.baseRequestResult.bytes;
-
-        baseResult.result = new BaseResult.Result();
-        baseResult.result.resultAll = new String(bytes);
-        baseResult.result.resultData = baseResult.result.resultAll;
-        if (baseHttpParams.openLog) {
-            Log.e(TAG, baseHttpParams.tags + ":返回值的结果是: " + baseResult.result.resultAll);
-        }
-        String resultData = "";
-        try {
-            resultData = iDataListenerCurr.parseResult(baseHttpParams, bytes);
+            BaseHttpCheckUtils.checkServiceAndDataparse(mHttpService, mDataListener);
         } catch (Exception e) {
-            resultData = "";
+            e.printStackTrace();
 
-            baseResult.success = false;
-            baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_Parsr_error;
-            baseResult.errorInfo.exception = e;
-            baseResult.errorInfo.errorMsg = "IDataListener parseResult方法出现异常,异常信息为:" + e;
-
-            if (baseHttpParams.openLog) {
-                Log.e(TAG, baseHttpParams.tags + ":错误描述_ IDataListener parseResult方法出现异常,异常信息为:" + e);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iResultCallBack != null) {
-                        iResultCallBack.onFailRequest(baseResult.errorInfo);
-                        iResultCallBack.onFail(baseResult.errorInfo);
-                        iResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
+            mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
+            mBaseResult.errorInfo.exception = e;
+            onFail();
+            return;
         }
-        baseResult.result.resultData = resultData;
 
-        if (resultData != null && !"".equals(resultData) && !"null".equals(resultData)) {
-            try {
-                switch (baseHttpParams.dataParseType) {
-                    case List:
-                        baseResult.result.setResult_list(iDataListenerCurr.parseList(baseHttpParams, resultData));
-                        break;
-                    case Object:
-                        baseResult.result.setResult_object(iDataListenerCurr.parseObject(baseHttpParams, resultData));
-                        break;
-                    case Combination:
-                        baseResult.result.setResult_list_combination(iDataListenerCurr.parseCombination(baseHttpParams, resultData));
-                        break;
+        /*
+         * 开始请求
+         */
+        //1.解析参数
+        mBaseHttpParams.params = mHttpService.parseParams(mBaseHttpParams.paramsList);
+        // 打印log
+        BaseLogUtils.logE(mBaseHttpParams.tags, mBaseHttpParams.openLog,
+                "提交方式   :" + mBaseHttpParams.request_type.toString() + "\n" +
+                        "返回值类型 :" + mBaseHttpParams.dataParseType.toString() + "\n" +
+                        "url        :" + mBaseHttpParams.url + "\n" +
+                        "params     :" + mHttpService.getRequestParamsDesc(mBaseHttpParams.params));
+        //2.执行请求
+        String requestResult = "";
+        if(isTestOpen){
+            // 2.1 使用测试数据
+            requestResult = testResult;
+            BaseLogUtils.logE(mBaseHttpParams.tags,mBaseHttpParams.openLog,"来自测试数据");
+        }
+        else{
+            // 2.2 正常请求
+            BaseRequestResult baseRequestResult = mHttpService.request(mBaseHttpParams);
+            // 判断请求结果
+            if (baseRequestResult == null) {
+                mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpFail;
+                mBaseResult.errorInfo.errorMsg = "";
+                onFail();
+                return;
+            }
+            if (!baseRequestResult.isSuccess) {
+                mBaseResult.errorInfo = baseRequestResult.errorInfo;
+                onFail();
+                return;
+            }
+            if (baseRequestResult.bytes == null || baseRequestResult.bytes.length == 0){
+                mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpFail;
+                mBaseResult.errorInfo.errorMsg = "返回值为空,请联系后台管理员";
+                onFail();
+                return;
+            }
+            requestResult = new String(baseRequestResult.bytes);
+        }
+
+        BaseLogUtils.logE(mBaseHttpParams.tags, mBaseHttpParams.openLog,
+                "成功获取到返回值, result = " + requestResult);
+        /*
+         * 开始解析参数
+         */
+        try {
+            mBaseResult.result.resultAll = requestResult;
+
+            BaseResultData baseResultData = mDataListener.parseResult(mBaseHttpParams,requestResult);
+            mBaseResult.baseResultData = baseResultData;
+            if(baseResultData == null){
+                mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_ResultFail;
+                mBaseResult.errorInfo.errorMsg = "IDataListener中 parseResult方法返回值不能为空";
+                onFail();
+                return;
+            }
+            try{
+                switch (mBaseHttpParams.dataParseType) {
+                    case List: {
+                        mBaseResult.result.setResult_list(mDataListener.getList(mBaseHttpParams, baseResultData));
+                    }
+                    break;
+                    case Object: {
+                        mBaseResult.result.setResult_object(mDataListener.getObject(mBaseHttpParams, baseResultData));
+                    }
+                    break;
                     case String:
-                        baseResult.result.setResult_str(iDataListenerCurr.parseDefault(baseHttpParams, resultData));
-                    default:
-                        break;
+                    default: {
+                        mBaseResult.result.setResult_str(mDataListener.getString(mBaseHttpParams, baseResultData));
+                    }
+                    break;
                 }
-            } catch (Exception e) {
-                baseResult.success = false;
-                baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_Parsr_error;
-                baseResult.errorInfo.exception = e;
-                baseResult.errorInfo.errorMsg = "IDataListener 返回值解析异常,异常信息为:" + e;
+            }catch (Exception e){
+                mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_ResultFail;
+                mBaseResult.errorInfo.exception = e;
+                onFail();
+                return;
+            }
 
-                if (baseHttpParams.openLog) {
-                    Log.e(TAG, baseHttpParams.tags + ":错误描述_ IDataListener 返回值解析异常,异常信息为:" + e);
+            if(mDataListener.isFailResult(mBaseHttpParams,baseResultData,mBaseResult.result)){
+                mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_FailFromResult;
+                mBaseResult.errorInfo.errorMsg = baseResultData.getResultMsg();
+                onFail();
+                return;
+            }else{
+                mBaseResult.success = true;
+                onSuccess();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_ResultFail;
+            mBaseResult.errorInfo.exception = e;
+            onFail();
+        }
+    }
+    // 成功
+    private void onSuccess() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if(breakOff){
+                    BaseLogUtils.logE(mBaseHttpParams.tags, mBaseHttpParams.openLog,
+                            "页面关闭，此次请求结束");
+                   return;
                 }
-                // 请求结果出现异常
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (isDialogDismiss && isDialogDismissWhenFail) {
-                            dismissDialog();
+                mBaseResult.success = true;
+                BaseLogUtils.logE(mBaseHttpParams.tags, mBaseHttpParams.openLog,
+                        "此次请求结束");
+                mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Success;
+                mBaseResult.errorInfo.errorMsg = "";
+                mBaseResult.errorInfo.exception = null;
+                dismissDialog(BaseHttpConfig.TYPE_SUCCESS);
+                if (mHttpResultCallBack != null) {
+                    mHttpResultCallBack.onSuccess(mBaseResult);
+                    mHttpResultCallBack.onFinal(mBaseResult);
+                }
+            }
+        });
+    }
+    // 失败
+    private void onFail() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if(breakOff){
+                    BaseLogUtils.logE(mBaseHttpParams.tags, mBaseHttpParams.openLog,
+                            "页面关闭，此次请求结束");
+                    return;
+                }
+                mBaseResult.success = false;
+                BaseLogUtils.logE(mBaseHttpParams.tags, mBaseHttpParams.openLog,
+                        mBaseResult.errorInfo.toString());
+                dismissDialog(BaseHttpConfig.TYPE_FAIL);
+                if (mHttpResultCallBack != null) {
+                    if(mBaseResult.errorInfo.errorCode == BaseHttpConfig.ErrorCode.Error_FailFromResult){
+                        if(!mHttpResultCallBack.onFailForResult(mBaseResult)){
+                            mHttpResultCallBack.onFail(mBaseResult.errorInfo);
                         }
-                        if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                            iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                        }
-                        if (iResultCallBack != null) {
-                            iResultCallBack.onFailRequest(baseResult.errorInfo);
-                            iResultCallBack.onFail(baseResult.errorInfo);
-                            iResultCallBack.onFinal(baseResult);
-                        }
+                    }else{
+                        mHttpResultCallBack.onFail(mBaseResult.errorInfo);
                     }
-                });
-                return false;
-            }
-        }
-        if (iDataListenerCurr.isFail(baseHttpParams, baseResult)) {
-            baseResult.success = false;
-            // 返回值提示错误
-            BaseErrorInfo baseErrorInfo = iDataListenerCurr.getFailErrorInfo();
-            if (baseErrorInfo == null) {
-                baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_Parsr_error_default;
-                baseResult.errorInfo.errorMsg = "请求失败,请稍后重试";
-            } else {
-                baseResult.errorInfo = baseErrorInfo;
-            }
-
-            if (baseHttpParams.openLog) {
-                Log.e(TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, "".equals(errorMsg) ? baseResult.errorInfo.errorMsg : errorMsg);
-                    }
-                    if (iResultCallBack != null) {
-                        iResultCallBack.onFailRequest(baseResult.errorInfo);
-                        iResultCallBack.onFail(baseResult.errorInfo);
-                        iResultCallBack.onFinal(baseResult);
-                    }
+                    mHttpResultCallBack.onFinal(mBaseResult);
                 }
-            });
-            return false;
-        } else if (iDataListenerCurr.isEmpty(baseHttpParams, baseResult)) {
-            baseResult.success = true;
-            baseResult.isEmpty = true;
-            // 返回值提示错误
-            BaseErrorInfo baseErrorInfo = iDataListenerCurr.getEmptyErrorInfo();
-            if (baseErrorInfo == null) {
-                baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_none;
-                baseResult.errorInfo.errorMsg = "未获取到数据";
-            } else {
-                baseResult.errorInfo = baseErrorInfo;
             }
-            if (baseHttpParams.openLog) {
-                Log.e(TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenEmpty) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowEmptyMessage) {
-                        iMessageManager.showEmptyMessages(contextStatic, "".equals(emptyMsg) ? baseResult.errorInfo.errorMsg : emptyMsg);
-                    }
-                    if (iResultCallBack != null) {
-                        iResultCallBack.onEmpty(baseResult.errorInfo);
-                        iResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        return true;
+        });
     }
 
 
-    /************************ 上传文件设置 ********************************/
-    // 是否同步上传 默认 是
-    public boolean isSysn  = true;
-    public BaseHttpUtils initUploadSysn(boolean isSysn){
-        this.isSysn = isSysn;
-        return this;
-    }
-    // 最大异步上传个数（最大是3）
-    public int maxUploadCount = 3;
-    public BaseHttpUtils initMaxUploadCount(int maxUploadCount){
-        this.maxUploadCount = maxUploadCount;
-        return this;
-    }
 
-    public List<File> listFiles = new ArrayList<>();
-    public List<String> listFilesKey = new ArrayList<>();
-
-    public BaseHttpUtils initFilePath(String filePath) {
-        File file = new File(filePath);
-        return initFile(file);
-    }
-
-    public BaseHttpUtils initFile(File file) {
-        if (file != null) {
-            listFiles.add(file);
-        }
-        return this;
-    }
-    public BaseHttpUtils initFilesList(List<File> fileList) {
-        this.listFiles.addAll(fileList);
-        return this;
-    }
-
-    public BaseHttpUtils initFileList(String... filePathList) {
-        for (String s : filePathList) {
-            initFilePath(s);
-        }
-        return this;
-    }
-
-    public BaseHttpUtils initFileList(List<String> filePathList) {
-        for (String s : filePathList) {
-            initFilePath(s);
-        }
-        return this;
-    }
-
-
-    public BaseHttpUtils initFileKeyList(String... filePathList) {
-        for (String s : filePathList) {
-            listFilesKey.add(s);
-        }
-        return this;
-    }
-
+    /******************************************** 上传文件 *********************************/
     /**
-     * key生成策略
-     * isChange = true   keyFirst0 keyFirst1 keyFirst2 keyFirst3...
-     * isChange = false   keyFirst keyFirst keyFirst keyFirst...
-     *
-     * @param keyFirst
-     * @param isChange
+     * 设置要上传的文件
+     * @param fileList
      * @return
      */
-    String keyFirst = "file";
-    boolean isKeyChange = false;
-    // key自动生成。
-    boolean isKeyAuto = false;
-
-    public BaseHttpUtils initFileKey(String keyFirst, boolean isKeyChange) {
-        isKeyAuto = true;
-        this.keyFirst = keyFirst;
-        this.isKeyChange = isKeyChange;
-        return this;
-    }
-
-    // 上传完成后需要不需要删除文件
-    public BaseHttpUtils initFileDelete(boolean delete) {
-        baseHttpParams.isDelete = delete;
+    public BaseHttpUtils initFiles(List<File> fileList){
+        mBaseHttpParams.fileList = fileList;
         return this;
     }
 
     /**
-     * 文件上传请求回调
+     * 设置上传文件的name
+     * @param fileKeys
+     * @return
      */
-    IHttpFileResultCallBack iHttpFileResultCallBack;
-
-    public BaseHttpUtils initHttpFileResultCallBack(IHttpFileResultCallBack iHttpFileResultCallBack) {
-        this.iHttpFileResultCallBack = iHttpFileResultCallBack;
+    public BaseHttpUtils initFileKeys(String fileKeys){
+        mBaseHttpParams.fileKeys.clear();
+        mBaseHttpParams.fileKeys.add(fileKeys);
+        return this;
+    }
+    public BaseHttpUtils initFileKeys(List<String> fileKeys){
+        mBaseHttpParams.fileKeys = fileKeys;
         return this;
     }
 
-    public void upload() {
+    /**
+     * 设置是否可以不上传文件
+     * @param canEmpty
+     * @return
+     */
+    public BaseHttpUtils initCanEmptyFile(boolean canEmpty){
+        mBaseHttpParams.isCanFileEmpty = canEmpty;
+        return this;
+    }
+
+
+    /**
+     * 上传文件
+     */
+    public void upload(){
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            BaseThreadPoolUtil.execute(new Runnable() {
+            BaseThreadPoolUtils.execute(new Runnable() {
                 @Override
                 public void run() {
                     uploads();
@@ -1085,806 +866,145 @@ public final class BaseHttpUtils {
         }
     }
 
-    private void uploads() { // log开关设置
-        baseHttpParams.openLog = checkLog();
-        settingMessageManager();
-
-        if ("".equals(baseHttpParams.url) || null == baseHttpParams.url) {
-            baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, tags + ":错误描述_ url不能为空");
-            }
-            deleteFile();
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    baseResult.errorInfo.errorMsg = "url不能为空";
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return;
-        }
-
-        if (baseHttpParams.openLog) {
-            Log.e(TAG, baseHttpParams.tags + ": 开始上传文件");
-            Log.e(TAG, baseHttpParams.tags + ": url = " + baseHttpParams.url);
-            Log.e(TAG, baseHttpParams.tags + ": 上传文件个数:" + listFiles.size());
-        }
-        if (!settingFileServiceAndDataListener()) {
-            deleteFile();
-            return;
-        }
-        if (!checkFiles()) {
-            deleteFile();
-            return;
-        }
-        if(isSysn || listFiles.size() == 1){
-            // 同步
-            if (!callFileHttpRequest()) {
-                deleteFile();
-                return;
-            }
-            if (!callFileDataParse()) {
-                deleteFile();
-                return;
-            }
-        }else{
-            boolean flag = false;
-//            startUpload();
-        }
-        if (baseHttpParams.openLog) {
-            Log.e(BaseHttpConfig.TAG, tags + ": 文件上传成功");
-        }
-        deleteFile();
+    private void uploads() {
+        mBaseResult = new BaseResult();
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                if (isDialogDismiss && isDialogDismissWhenSuccess) {
-                    dismissDialog();
-                }
-                if (iMessageManager != null && isShowMessage && isShowSuccessMessage) {
-                    iMessageManager.showMessages(contextStatic, "".equals(successMsg) ? baseResult.errorInfo.errorMsg : successMsg);
-                }
-                if (iHttpFileResultCallBack != null) {
-                    iHttpFileResultCallBack.onSuccess(baseResult);
-                    iHttpFileResultCallBack.onFinal(baseResult);
+                if (mHttpResultCallBack != null) {
+                    mHttpResultCallBack.onBeforeRequest(mBaseHttpParams);
                 }
             }
         });
-
-    }
-
-    // 根据传入的值 初始化 IFileService 和 IDataListener
-    private boolean settingFileServiceAndDataListener() {
-        /******************** 发送前检查 ***********************/
-        baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
+        /*
+         * 检查和初始化
+         */
         try {
-            // 获取当前的 数据请求工具类
-            iFileServiceCurr = (iFileServiceCurr == null) ? (IFileService) (iFileServiceStatic == null ? null : iFileServiceStatic.newInstance()) : iFileServiceCurr;
-            // 获取当前的 数据解析工具类
-            iFileDataListenerCurr = iFileDataListenerCurr == null ? (IDataListener) (iFileDataStatic == null ? null : iFileDataStatic.newInstance()) : iFileDataListenerCurr;
-        } catch (IllegalAccessException e) {
+            // 1.检查请求参数是否设置正确
+            BaseHttpCheckUtils.checkFileRequest(mBaseHttpParams);
+
+            // 2.检查和初始化 请求工具类
+            if (mFileService == null && mBaseHttpInitParams.mHttpService != null) {
+                mFileService = BaseObjectUtils.clone(mBaseHttpInitParams.mFileService);
+            }
+            // 3.检查和初始化 解析工具类
+            if (mDataListener == null && mBaseHttpInitParams.mDataListener != null) {
+                mDataListener = BaseObjectUtils.clone(mBaseHttpInitParams.mDataListener);
+            }
+
+//            // 4.检查和初始化 请求工具类 过滤器
+//            if (mHttpServiceFilter == null && mBaseHttpInitParams.mHttpServiceFilter != null) {
+//                mHttpServiceFilter = BaseObjectUtils.clone(mBaseHttpInitParams.mHttpServiceFilter);
+//            }
+//            // 4.1 过滤设置 请求工具类
+//            if (mHttpServiceFilter != null && mHttpService != null) {
+//                mHttpService = mHttpServiceFilter.filterIHttpService(mHttpService);
+//            }
+
+            // 5.检查和初始化 解析工具类  过滤器
+            if (mDataListenerFilter == null && mBaseHttpInitParams.mDataListenerFilter != null) {
+                mDataListenerFilter = BaseObjectUtils.clone(mBaseHttpInitParams.mDataListenerFilter);
+            }
+            // 5.1 过滤设置 解析工具类
+            if (mDataListenerFilter != null && mDataListener != null) {
+                mDataListener = mDataListenerFilter.filterIDataListener(mDataListener);
+            }
+            BaseHttpCheckUtils.checkFileServiceAndDataparse(mFileService, mDataListener);
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
+
+            mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
+            mBaseResult.errorInfo.exception = e;
+            onFail();
+            return;
         }
-        // 检查调用方式是否正确
-        if ((iFileServiceCurr == null || iFileDataListenerCurr == null)) {
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, tags + ": 请先初始化设置好文件处理工具和解析工具类");
-            }
-            baseResult.errorInfo.errorMsg = "请先初始化设置好文件处理工具和解析工具类";
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        } else {
-//            if (iHttpServiceFilter != null && iHttpServiceCurr != null) {
-//                iHttpServiceFilter.filterIHttpService(iHttpServiceCurr);
-//            }
-//            if (iDataListenerFilter != null && iDataListenerCurr != null) {
-//                iDataListenerFilter.filterIDataListener(iDataListenerCurr);
-//            }
-//            // filterIHttpService 和 filterIDataListener 以后 再做一次非空判断
-//            if ((iHttpServiceCurr == null || iDataListenerCurr == null)) {
-//                if (baseHttpParams.openLog) {
-//                    Log.e(BaseHttpConfig.TAG, tags + ": filterIHttpService 和 filterIDataListener 方法不能设置参数为null");
-//                }
-//                baseResult.errorInfo.errorMsg = "filterIHttpService 和 filterIDataListener 方法不能设置参数为null";
-//                mHandler.post(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        if (isDialogDismiss && isDialogDismissWhenFail) {
-//                            dismissDialog();
-//                        }
-//                        if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-//                            iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-//                        }
-//                        if (iHttpFileResultCallBack != null) {
-//                            iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-//                            iHttpFileResultCallBack.onFinal(baseResult);
-//                        }
-//                    }
-//                });
-//                return false;
-//            }
-            return true;
+
+        /*
+         * 开始请求
+         */
+        //1.解析参数
+//        mBaseHttpParams.params = mFileService.uploadFile(mBaseHttpParams.paramsList);
+        // 打印log
+        BaseLogUtils.logE(mBaseHttpParams.tags, mBaseHttpParams.openLog,
+                  "提交方式     :" + mBaseHttpParams.request_type.toString() + "\n" +
+                        "返回值类型   :" + mBaseHttpParams.dataParseType.toString() + "\n" +
+                        "url        :" + mBaseHttpParams.url + "\n" +
+                        "params     :" + mBaseHttpParams.getParamsDesc() + "\n"+
+                        "files      :" + mBaseHttpParams.fileList.size() + "个文件");
+        //2.执行请求
+        BaseRequestResult baseRequestResult = mFileService.uploadFile(mBaseHttpParams, mFileUploadListener);
+        // 判断请求结果
+        if (baseRequestResult == null) {
+            mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpFail;
+            mBaseResult.errorInfo.errorMsg = "";
+            onFail();
+            return;
         }
-    }
+        if (!baseRequestResult.isSuccess) {
+            mBaseResult.errorInfo = baseRequestResult.errorInfo;
+            onFail();
+            return;
+        }
+        if (baseRequestResult.bytes == null || baseRequestResult.bytes.length == 0){
+            mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_HttpFail;
+            mBaseResult.errorInfo.errorMsg = "返回值为空,请联系后台管理员";
+            onFail();
+            return;
+        }
+        String requestResult = new String(baseRequestResult.bytes);
+        BaseLogUtils.logE(mBaseHttpParams.tags, mBaseHttpParams.openLog,
+                "成功获取到返回值, result = " + requestResult);
+        /*
+         * 开始解析参数
+         */
+        try {
+            mBaseResult.result.resultAll = requestResult;
 
-    // 检查文件是否可用
-    private boolean checkFiles() {
-        baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_File_error;
-        if (listFiles.isEmpty()) {
-            baseResult.errorInfo.errorMsg = "上传文件为空";
-
-            if (baseHttpParams.openLog) {
-                Log.e(TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
+            BaseResultData baseResultData = mDataListener.parseResult(mBaseHttpParams,requestResult);
+            mBaseResult.baseResultData = baseResultData;
+            if(baseResultData == null){
+                mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_ResultFail;
+                mBaseResult.errorInfo.errorMsg = "IDataListener中 parseResult方法返回值不能为空";
+                onFail();
+                return;
             }
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
+            try{
+                switch (mBaseHttpParams.dataParseType) {
+                    case List: {
+                        mBaseResult.result.setResult_list(mDataListener.getList(mBaseHttpParams, baseResultData));
                     }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, "".equals(errorMsg) ? baseResult.errorInfo.errorMsg : errorMsg);
+                    break;
+                    case Object: {
+                        mBaseResult.result.setResult_object(mDataListener.getObject(mBaseHttpParams, baseResultData));
                     }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
+                    break;
+                    case String:
+                    default: {
+                        mBaseResult.result.setResult_str(mDataListener.getString(mBaseHttpParams, baseResultData));
                     }
-                }
-            });
-            return false;
-        } else {
-            if (!isKeyAuto) {
-                if (listFiles.size() != listFilesKey.size()) {
-                    baseResult.errorInfo.errorMsg = "未设置上传文件的key值";
-                    if (baseHttpParams.openLog) {
-                        Log.e(TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-                    }
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (isDialogDismiss && isDialogDismissWhenFail) {
-                                dismissDialog();
-                            }
-                            if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                                iMessageManager.showErrorMessages(contextStatic, "".equals(errorMsg) ? baseResult.errorInfo.errorMsg : errorMsg);
-                            }
-                            if (iHttpFileResultCallBack != null) {
-                                iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                                iHttpFileResultCallBack.onFinal(baseResult);
-                            }
-                        }
-                    });
-
-                    return false;
-                }
-            } else {
-                listFilesKey.clear();
-            }
-            boolean flag = true;
-            for (int i = 0; i < listFiles.size(); i++) {
-                File file = listFiles.get(i);
-                if (!file.exists()) {
-                    baseResult.errorInfo.errorMsg = "第" + (i + 1) + "个文件不存在: 路径为:" + file.getPath();
-                    if (baseHttpParams.openLog) {
-                        Log.e(TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-                    }
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (isDialogDismiss && isDialogDismissWhenFail) {
-                                dismissDialog();
-                            }
-                            if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                                iMessageManager.showErrorMessages(contextStatic, "".equals(errorMsg) ? baseResult.errorInfo.errorMsg : errorMsg);
-                            }
-                            if (iHttpFileResultCallBack != null) {
-                                iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                                iHttpFileResultCallBack.onFinal(baseResult);
-                            }
-                        }
-                    });
-                    flag = false;
                     break;
                 }
-                if (isKeyAuto) {
-                    listFilesKey.add(isKeyChange ? (keyFirst + i) : keyFirst);
-                }
-                if (baseHttpParams.openLog) {
-                    Log.e(TAG, baseHttpParams.tags + ": 第" + (i + 1) + "个文件: 路径为:" + file.getPath() + ", key = " + listFilesKey.get(i));
-                }
-            }
-            if (flag) {
-                baseHttpParams.fileList = listFiles;
-                baseHttpParams.fileKeys = listFilesKey;
-            }
-            return flag;
-        }
-    }
-
-    // 删除文件
-    private void deleteFile(){
-        if(baseHttpParams.isDelete && !listFiles.isEmpty()){
-            for (File listFile : listFiles) {
-                if(listFile.exists()){
-                    listFile.delete();
-                }
-            }
-        }
-    }
-
-    // 文件上传
-    private boolean callFileHttpRequest() {
-        BaseRequestResult baseRequestResult = iFileServiceCurr.uploadFile(baseHttpParams, new IFileUploadListener() {
-            @Override
-            public void onFileProgress(final int position,final File file,final long curlenth,final long total) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (iHttpFileResultCallBack != null) {
-                            iHttpFileResultCallBack.onFileProgress(position,file,curlenth,total);
-                        }
-                    }
-                });
-            }
-        });
-        if (baseRequestResult == null || !baseRequestResult.checkResult()) {
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, tags + ":错误描述_ IFileService的uploadFile方法中 返回值BaseRequestResult不符合规定");
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    BaseErrorInfo baseErrorInfos = new BaseErrorInfo();
-                    baseErrorInfos.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
-                    baseErrorInfos.errorMsg = "IFileService的uploadFile方法中 返回值BaseRequestResult不符合规定";
-                    baseResult.errorInfo = baseErrorInfos;
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseErrorInfos);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        baseResult.baseRequestResult = baseRequestResult;
-        if (!baseRequestResult.isSuccess) {
-            baseResult.success = false;
-            baseResult.errorInfo = baseRequestResult.errorInfo;
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        baseResult.baseRequestResult.isSuccess = true;
-        return true;
-    }
-
-    // 文件上传后的数据解析
-    private boolean callFileDataParse() {
-        /******************** 解析返回值 ***********************/
-        if (baseHttpParams.openLog) {
-            Log.e(BaseHttpConfig.TAG, tags + ": 开始解析返回值...");
-        }
-        byte[] bytes = baseResult.baseRequestResult.bytes;
-
-        baseResult.result = new BaseResult.Result();
-        baseResult.result.resultAll = new String(bytes);
-        baseResult.result.resultData = baseResult.result.resultAll;
-        if (baseHttpParams.openLog) {
-            Log.e(TAG, baseHttpParams.tags + ":返回值的结果是: " + baseResult.result.resultAll);
-        }
-        String resultData = "";
-        try {
-            resultData = iFileDataListenerCurr.parseResult(baseHttpParams, bytes);
-        } catch (Exception e) {
-            resultData = "";
-
-            baseResult.success = false;
-            baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_Parsr_error;
-            baseResult.errorInfo.exception = e;
-            baseResult.errorInfo.errorMsg = "IDataListener parseResult方法出现异常,异常信息为:" + e;
-
-            if (baseHttpParams.openLog) {
-                Log.e(TAG, baseHttpParams.tags + ":错误描述_ IDataListener parseResult方法出现异常,异常信息为:" + e);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        baseResult.result.resultData = resultData;
-
-        if (resultData != null && !"".equals(resultData) && !"null".equals(resultData)) {
-            try {
-                switch (baseHttpParams.dataParseType) {
-                    case List:
-                        baseResult.result.setResult_list(iFileDataListenerCurr.parseList(baseHttpParams, resultData));
-                        break;
-                    case Object:
-                        baseResult.result.setResult_object(iFileDataListenerCurr.parseObject(baseHttpParams, resultData));
-                        break;
-                    case Combination:
-                        baseResult.result.setResult_list_combination(iFileDataListenerCurr.parseCombination(baseHttpParams, resultData));
-                        break;
-                    case String:
-                        baseResult.result.setResult_str(iFileDataListenerCurr.parseDefault(baseHttpParams, resultData));
-                    default:
-                        break;
-                }
-            } catch (Exception e) {
-                baseResult.success = false;
-                baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_Parsr_error;
-                baseResult.errorInfo.exception = e;
-                baseResult.errorInfo.errorMsg = "IDataListener 返回值解析异常,异常信息为:" + e;
-
-                if (baseHttpParams.openLog) {
-                    Log.e(TAG, baseHttpParams.tags + ":错误描述_ IDataListener 返回值解析异常,异常信息为:" + e);
-                }
-                // 请求结果出现异常
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (isDialogDismiss && isDialogDismissWhenFail) {
-                            dismissDialog();
-                        }
-                        if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                            iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                        }
-                        if (iHttpFileResultCallBack != null) {
-                            iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                            iHttpFileResultCallBack.onFinal(baseResult);
-                        }
-                    }
-                });
-                return false;
-            }
-        }
-        if (iFileDataListenerCurr.isFail(baseHttpParams, baseResult)) {
-            baseResult.success = false;
-            // 返回值提示错误
-            BaseErrorInfo baseErrorInfo = iFileDataListenerCurr.getFailErrorInfo();
-            if (baseErrorInfo == null) {
-                baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_Parsr_error_default;
-                baseResult.errorInfo.errorMsg = "请求失败,请稍后重试";
-            } else {
-                baseResult.errorInfo = baseErrorInfo;
+            }catch (Exception e){
+                mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_ResultFail;
+                mBaseResult.errorInfo.exception = e;
+                onFail();
+                return;
             }
 
-            if (baseHttpParams.openLog) {
-                Log.e(TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, "".equals(errorMsg) ? baseResult.errorInfo.errorMsg : errorMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        } else if (iFileDataListenerCurr.isEmpty(baseHttpParams, baseResult)) {
-            baseResult.success = true;
-            baseResult.isEmpty = true;
-            // 返回值提示错误
-            BaseErrorInfo baseErrorInfo = iFileDataListenerCurr.getEmptyErrorInfo();
-            if (baseErrorInfo == null) {
-                baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_none;
-                baseResult.errorInfo.errorMsg = "未获取到数据";
-            } else {
-                baseResult.errorInfo = baseErrorInfo;
-            }
-            if (baseHttpParams.openLog) {
-                Log.e(TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenEmpty) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowEmptyMessage) {
-                        iMessageManager.showEmptyMessages(contextStatic, "".equals(emptyMsg) ? baseResult.errorInfo.errorMsg : emptyMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onEmpty(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        return true;
-    }
-
-    // 已经完成上传的个数
-    private int uploadedCount = 0;
-    private void asynUpload(){
-        if(listFiles.size() <= maxUploadCount){
-            // 需要上传的文件没有达到最大上传数
-            for (int i = 0; i < listFiles.size(); i++) {
-                BaseThreadPoolUtil.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        isAsynUploadFinish();
-                    }
-                });
-            }
-        }else{
-            // 最开始启动 maxUploadCount个线程用于上传
-            if(uploadedCount == 0){
-                // 异步
-                for (int i = 0; i < maxUploadCount; i++) {
-                    BaseThreadPoolUtil.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            isAsynUploadFinish();
-                        }
-                    });
-                }
+            if(mDataListener.isFailResult(mBaseHttpParams,baseResultData,mBaseResult.result)){
+                mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_FailFromResult;
+                mBaseResult.errorInfo.errorMsg = baseResultData.getResultMsg();
+                onFail();
+                return;
             }else{
-                BaseThreadPoolUtil.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        isAsynUploadFinish();
-                    }
-                });
+                mBaseResult.success = true;
+                onSuccess();
             }
-        }
-    }
-    // 是否全部上传完成
-    private boolean isAsynUploadFinish(){
-        uploadedCount+=1;
-        if(uploadedCount == listFiles.size()){
-            // 全部完成
-            return true;
-        }
-        // 上传其他的
-        asynUpload();
-        return false;
-    }
-    // 异步上传
-    private boolean callFileByAsyn(){
-        BaseRequestResult baseRequestResult = iFileServiceCurr.uploadFile(baseHttpParams, new IFileUploadListener() {
-            @Override
-            public void onFileProgress(final int position,final File file,final long curlenth,final long total) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (iHttpFileResultCallBack != null) {
-                            iHttpFileResultCallBack.onFileProgress(position,file,curlenth,total);
-                        }
-                    }
-                });
-            }
-        });
-        if (baseRequestResult == null || !baseRequestResult.checkResult()) {
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, tags + ":错误描述_ IFileService的uploadFile方法中 返回值BaseRequestResult不符合规定");
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    BaseErrorInfo baseErrorInfos = new BaseErrorInfo();
-                    baseErrorInfos.errorCode = BaseHttpConfig.ErrorCode.Error_Use;
-                    baseErrorInfos.errorMsg = "IFileService的uploadFile方法中 返回值BaseRequestResult不符合规定";
-                    baseResult.errorInfo = baseErrorInfos;
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseErrorInfos);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        baseResult.baseRequestResult = baseRequestResult;
-        if (!baseRequestResult.isSuccess) {
-            baseResult.success = false;
-            baseResult.errorInfo = baseRequestResult.errorInfo;
-            if (baseHttpParams.openLog) {
-                Log.e(BaseHttpConfig.TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        baseResult.baseRequestResult.isSuccess = true;
-
-        /******************** 解析返回值 ***********************/
-        if (baseHttpParams.openLog) {
-            Log.e(BaseHttpConfig.TAG, tags + ": 开始解析返回值...");
-        }
-        byte[] bytes = baseResult.baseRequestResult.bytes;
-
-        baseResult.result = new BaseResult.Result();
-        baseResult.result.resultAll = new String(bytes);
-        baseResult.result.resultData = baseResult.result.resultAll;
-        if (baseHttpParams.openLog) {
-            Log.e(TAG, baseHttpParams.tags + ":返回值的结果是: " + baseResult.result.resultAll);
-        }
-        String resultData = "";
-        try {
-            resultData = iFileDataListenerCurr.parseResult(baseHttpParams, bytes);
         } catch (Exception e) {
-            resultData = "";
-
-            baseResult.success = false;
-            baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_Parsr_error;
-            baseResult.errorInfo.exception = e;
-            baseResult.errorInfo.errorMsg = "IDataListener parseResult方法出现异常,异常信息为:" + e;
-
-            if (baseHttpParams.openLog) {
-                Log.e(TAG, baseHttpParams.tags + ":错误描述_ IDataListener parseResult方法出现异常,异常信息为:" + e);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
+            e.printStackTrace();
+            mBaseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_ResultFail;
+            mBaseResult.errorInfo.exception = e;
+            onFail();
         }
-        baseResult.result.resultData = resultData;
-
-        if (resultData != null && !"".equals(resultData) && !"null".equals(resultData)) {
-            try {
-                switch (baseHttpParams.dataParseType) {
-                    case List:
-                        baseResult.result.setResult_list(iFileDataListenerCurr.parseList(baseHttpParams, resultData));
-                        break;
-                    case Object:
-                        baseResult.result.setResult_object(iFileDataListenerCurr.parseObject(baseHttpParams, resultData));
-                        break;
-                    case Combination:
-                        baseResult.result.setResult_list_combination(iFileDataListenerCurr.parseCombination(baseHttpParams, resultData));
-                        break;
-                    case String:
-                        baseResult.result.setResult_str(iFileDataListenerCurr.parseDefault(baseHttpParams, resultData));
-                    default:
-                        break;
-                }
-            } catch (Exception e) {
-                baseResult.success = false;
-                baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_Parsr_error;
-                baseResult.errorInfo.exception = e;
-                baseResult.errorInfo.errorMsg = "IDataListener 返回值解析异常,异常信息为:" + e;
-
-                if (baseHttpParams.openLog) {
-                    Log.e(TAG, baseHttpParams.tags + ":错误描述_ IDataListener 返回值解析异常,异常信息为:" + e);
-                }
-                // 请求结果出现异常
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (isDialogDismiss && isDialogDismissWhenFail) {
-                            dismissDialog();
-                        }
-                        if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                            iMessageManager.showErrorMessages(contextStatic, baseResult.errorInfo.errorMsg);
-                        }
-                        if (iHttpFileResultCallBack != null) {
-                            iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                            iHttpFileResultCallBack.onFinal(baseResult);
-                        }
-                    }
-                });
-                return false;
-            }
-        }
-        if (iFileDataListenerCurr.isFail(baseHttpParams, baseResult)) {
-            baseResult.success = false;
-            // 返回值提示错误
-            BaseErrorInfo baseErrorInfo = iFileDataListenerCurr.getFailErrorInfo();
-            if (baseErrorInfo == null) {
-                baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_Parsr_error_default;
-                baseResult.errorInfo.errorMsg = "请求失败,请稍后重试";
-            } else {
-                baseResult.errorInfo = baseErrorInfo;
-            }
-
-            if (baseHttpParams.openLog) {
-                Log.e(TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenFail) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowErrorMessage) {
-                        iMessageManager.showErrorMessages(contextStatic, "".equals(errorMsg) ? baseResult.errorInfo.errorMsg : errorMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onFail(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        } else if (iFileDataListenerCurr.isEmpty(baseHttpParams, baseResult)) {
-            baseResult.success = true;
-            baseResult.isEmpty = true;
-            // 返回值提示错误
-            BaseErrorInfo baseErrorInfo = iFileDataListenerCurr.getEmptyErrorInfo();
-            if (baseErrorInfo == null) {
-                baseResult.errorInfo.errorCode = BaseHttpConfig.ErrorCode.Error_Result_none;
-                baseResult.errorInfo.errorMsg = "未获取到数据";
-            } else {
-                baseResult.errorInfo = baseErrorInfo;
-            }
-            if (baseHttpParams.openLog) {
-                Log.e(TAG, baseHttpParams.tags + ":错误描述_ " + baseResult.errorInfo.errorMsg);
-            }
-            // 请求结果出现异常
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDialogDismiss && isDialogDismissWhenEmpty) {
-                        dismissDialog();
-                    }
-                    if (iMessageManager != null && isShowMessage && isShowEmptyMessage) {
-                        iMessageManager.showEmptyMessages(contextStatic, "".equals(emptyMsg) ? baseResult.errorInfo.errorMsg : emptyMsg);
-                    }
-                    if (iHttpFileResultCallBack != null) {
-                        iHttpFileResultCallBack.onEmpty(baseResult.errorInfo);
-                        iHttpFileResultCallBack.onFinal(baseResult);
-                    }
-                }
-            });
-            return false;
-        }
-        return true;
-    }
-
-
-    class MyRunnable implements Runnable {
-        int position;
-        public MyRunnable(int position){
-            this.position = position;
-        }
-        @Override
-        public void run() {
-            System.out.println(position+":当前执行第"+(position+1)+"个");
-            try {
-                Thread.sleep(500);
-                uploaded(position);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    static int listFileSize = 9;
-    static int maxSize = 3;
-    static int startedCount;
-    static int uploadSuccessCount = 0;
-    public void startUpload(){
-        // 每次需要处理的个数
-        int uploadCount = Math.min(maxSize, listFileSize);
-
-        startedCount = uploadCount;
-
-        for(int i = 0 ; i < uploadCount; i++){
-            System.out.println(i+":开始执行第"+(i+1)+"个");
-            new Thread(new MyRunnable(i)).start();
-        }
-    }
-    public synchronized void uploaded(int position) {
-        uploadSuccessCount+=1;
-        System.out.println(position+":执行第"+(position+1)+"个成功,一共成功了"+uploadSuccessCount+"个");
-        if(uploadSuccessCount == listFileSize){
-            System.out.println("上传成功");
-        }else if(startedCount < listFileSize){
-            test2();
-        }
-    }
-    public synchronized void test2(){
-        startedCount+=1;
-        if(startedCount == listFileSize){
-            System.out.println("全部执行完毕");
-        }
-        System.out.println(startedCount+":开始执行第"+(startedCount)+"个");
-        new Thread(new MyRunnable(startedCount-1)).start();
     }
 }

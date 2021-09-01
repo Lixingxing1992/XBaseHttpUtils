@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/XBaseHttpUtils.iml" filepath="$PROJECT_DIR$/XBaseHttpUtils.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/lib_http/lib_http.iml" filepath="$PROJECT_DIR$/lib_http/lib_http.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/XBaseHttpUtils.iml" filepath="$PROJECT_DIR$/.idea/modules/XBaseHttpUtils.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/XBaseHttpUtils.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/XBaseHttpUtils.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lib_http/XBaseHttpUtils.lib_http.iml" filepath="$PROJECT_DIR$/.idea/modules/lib_http/XBaseHttpUtils.lib_http.iml" />
     </modules>
   </component>
 </project>

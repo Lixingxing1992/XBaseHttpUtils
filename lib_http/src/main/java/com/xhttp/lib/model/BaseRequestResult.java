@@ -1,8 +1,5 @@
 package com.xhttp.lib.model;
 
-import com.xhttp.lib.config.BaseErrorInfo;
-import com.xhttp.lib.config.BaseHttpConfig;
-
 /**
  * 网络请求的返回值封装
  * Created by lixingxing on 2019/6/4.
@@ -12,14 +9,13 @@ public class BaseRequestResult {
     public boolean isSuccess = false;
 
     // 返回值 数组
-    public byte[] bytes;
+    public byte[] bytes = new byte[]{};
 
     // 网络连接码   200 成功  -1 结果为空 -2有异常信息
     //请求返回连接码
     public int responseCode = 200;
 
-    public BaseErrorInfo errorInfo = new BaseErrorInfo(BaseHttpConfig.ErrorCode.Error_UnknowHttpError
-            , BaseHttpConfig.ErrorCode.Error_UnknowHttpError.toString());
+    public BaseErrorInfo errorInfo = new BaseErrorInfo();
 
     // 检查返回值是否符合条件
     public boolean checkResult() {

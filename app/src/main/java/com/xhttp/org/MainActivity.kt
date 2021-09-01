@@ -1,27 +1,25 @@
 package com.xhttp.org
 
 import android.app.ProgressDialog
-import android.os.Build
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import android.os.PersistableBundle
+import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.EditText
-import android.widget.Toast
 import com.xhttp.lib.BaseHttpUtils
 import com.xhttp.lib.BaseResult
 import com.xhttp.lib.callback.HttpResultCallBack
-import com.xhttp.lib.config.BaseErrorInfo
 import com.xhttp.lib.config.BaseHttpConfig
 import com.xhttp.lib.impl.data.DefaultDataListener
 import com.xhttp.lib.impl.data.JsonDataListener
-import com.xhttp.lib.impl.data.TDDataListener
+import com.xhttp.lib.impl.service.BaseTempHttpService
 import com.xhttp.lib.impl.service.DefaultHttpService
 import com.xhttp.lib.impl.service.JsonHttpService
-import com.xhttp.lib.impl.service.TDHttpService
 import com.xhttp.lib.interfaces.data.IDataListener
 import com.xhttp.lib.interfaces.http.IHttpService
+import com.xhttp.lib.model.BaseErrorInfo
+import com.xhttp.lib.model.BaseResultData
+import com.xhttp.lib.params.BaseHttpDialogParams
 import com.xhttp.lib.util.BaseThreadPoolUtil
 import com.xhttp.org.model.AchievnmentModel
 import kotlinx.android.synthetic.main.activity_main.*
@@ -32,7 +30,7 @@ class MainActivity : AppCompatActivity() {
     var listView = ArrayList<View>()
 
     var httpService: IHttpService = DefaultHttpService()
-    var dataListener: IDataListener = DefaultDataListener()
+//    var dataListener: IDataListener<? extends BaseResultData>?=null
 
     var isDialogDismiss = true
     var isDialogDismissWhenSuccess = true
@@ -94,25 +92,25 @@ class MainActivity : AppCompatActivity() {
                 R.id.service2 -> {
                     httpService = JsonHttpService()
                 }
-                R.id.service3 ->{
-                    httpService = TDHttpService()
+                R.id.service3 -> {
+                    httpService = BaseTempHttpService()
                 }
             }
         }
 
-        radioData.setOnCheckedChangeListener { radioGroup, i ->
-            when (i) {
-                R.id.data1 -> {
-                    dataListener = DefaultDataListener()
-                }
-                R.id.data2 -> {
-                    dataListener = JsonDataListener()
-                }
-                R.id.data3 ->{
-                    dataListener = TDDataListener()
-                }
-            }
-        }
+//        radioData.setOnCheckedChangeListener { radioGroup, i ->
+//            when (i) {
+//                R.id.data1 -> {
+//                    dataListener = DefaultDataListener()
+//                }
+//                R.id.data2 -> {
+//                    dataListener = JsonDataListener()
+//                }
+//                R.id.data3 -> {
+//                    dataListener = BaseTempHttpService()
+//                }
+//            }
+//        }
 
         radioDialog.setOnCheckedChangeListener { radioGroup, i ->
             when (i) {
@@ -128,13 +126,13 @@ class MainActivity : AppCompatActivity() {
                     isDialogDismissWhenEmpty = true
                     isDialogDismissWhenFail = true
                 }
-                R.id.dialog3 ->{
+                R.id.dialog3 -> {
                     isDialogDismiss = true
                     isDialogDismissWhenSuccess = true
                     isDialogDismissWhenEmpty = false
                     isDialogDismissWhenFail = true
                 }
-                R.id.dialog4 ->{
+                R.id.dialog4 -> {
                     isDialogDismiss = true
                     isDialogDismissWhenSuccess = true
                     isDialogDismissWhenEmpty = true
@@ -157,19 +155,19 @@ class MainActivity : AppCompatActivity() {
                     isShowEmpty = true
                     isShowSuccess = false
                 }
-                R.id.show3 ->{
+                R.id.show3 -> {
                     isShow = true
                     isShowError = true
                     isShowEmpty = false
                     isShowSuccess = false
                 }
-                R.id.show4 ->{
+                R.id.show4 -> {
                     isShow = true
                     isShowError = true
                     isShowEmpty = true
                     isShowSuccess = true
                 }
-                R.id.show5 ->{
+                R.id.show5 -> {
                     isShow = false
                     isShowError = true
                     isShowEmpty = true
@@ -190,34 +188,36 @@ class MainActivity : AppCompatActivity() {
                         for (view in listView) {
                             map.put((view.findViewById(R.id.keys) as EditText).text.toString(), (view.findViewById(R.id.values) as EditText).text.toString())
                         }
-                        BaseHttpUtils(waitingDialog)
+                        BaseHttpUtils.create(waitingDialog)
                                 .initUrl(url.text.toString())
                                 .initIHttpService(httpService)
-                                .initIDataListener(dataListener)
+                                .initIDataListener(when(radioData.checkedRadioButtonId){
+                                    R.id.data2 -> {
+                                        JsonDataListener()
+                                    }
+                                    R.id.data3 -> {
+                                        BaseTempHttpService() as IDataListener<BaseResultData>
+                                    }
+                                    else -> {
+                                        DefaultDataListener()
+                                    }
+                                })
                                 .initParams(map)
                                 .initClass(AchievnmentModel::class.java)
                                 .initDataParseType(BaseHttpConfig.DataParseType.Combination)
-                                .initDialogDismiss(isDialogDismiss)
-                                .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
-                                .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
-                                .initDialogDismissWhenFail(isDialogDismissWhenFail)
-                                .initShowMessage(isShow)
-                                .initShowErrorMessage(isShowError)
-                                .initShowEmptyMessage(isShowEmpty)
-                                .initShowSuccessMessage(isShowSuccess)
-                                .initIDataListenerFilter {
-                                    (it as TDDataListener).setResultCodes(mapOf("count" to BaseHttpConfig.DataParseType.String,"list" to BaseHttpConfig.DataParseType.List))
-                                }
-                                .initIMessageManagerFilter {
-
-                                }
+                                .initDialogDismiss(BaseHttpDialogParams().setDismissDialog(isDialogDismiss)
+                                        .setDismissDialogWhenSuccess(isDialogDismissWhenSuccess)
+                                        .setDismissDialogWhenFail(isDialogDismissWhenFail))
                                 .initHttpResultCallBack(object : HttpResultCallBack() {
                                     override fun onSuccess(baseResult: BaseResult) {
                                         result.text = baseResult.getResult().resultData
                                     }
-                                    override fun onEmpty(errorInfo: BaseErrorInfo) {
-                                        result.text = errorInfo.errorMsg
+
+                                    override fun onEmpty(baseResult: BaseResult?) {
+                                        super.onEmpty(baseResult)
+                                        result.text = baseResult?.errorInfo?.errorMsg.orEmpty()
                                     }
+
                                     override fun onFail(errorInfo: BaseErrorInfo) {
                                         result.text = errorInfo.errorMsg
                                     }
@@ -227,23 +227,29 @@ class MainActivity : AppCompatActivity() {
                     // Get
                     R.id.radioButton2 -> {
                         BaseThreadPoolUtil.execute {
-                            BaseHttpUtils(waitingDialog)
+                            BaseHttpUtils.create(waitingDialog)
                                     .initUrl(url.text.toString())
                                     .initIHttpService(httpService)
-                                    .initIDataListener(dataListener)
-                                    .initDialogDismiss(isDialogDismiss)
-                                    .initDialogDismissWhenSuccess(isDialogDismissWhenSuccess)
-                                    .initDialogDismissWhenEmpty(isDialogDismissWhenEmpty)
-                                    .initDialogDismissWhenFail(isDialogDismissWhenFail)
-                                    .initShowMessage(isShow)
-                                    .initShowErrorMessage(isShowError)
-                                    .initShowEmptyMessage(isShowEmpty)
-                                    .initShowSuccessMessage(isShowSuccess)
+                                    .initIDataListener(when(radioData.checkedRadioButtonId){
+                                        R.id.data2 -> {
+                                            JsonDataListener()
+                                        }
+                                        R.id.data3 -> {
+                                            BaseTempHttpService() as IDataListener<BaseResultData>
+                                        }
+                                        else -> {
+                                            DefaultDataListener()
+                                        }
+                                    })
+                                    .initDialogDismiss(BaseHttpDialogParams().setDismissDialog(isDialogDismiss)
+                                            .setDismissDialogWhenSuccess(isDialogDismissWhenSuccess)
+                                            .setDismissDialogWhenFail(isDialogDismissWhenFail))
                                     .initHttpResultCallBack(object : HttpResultCallBack() {
                                         override fun onSuccess(baseResult: BaseResult) {
                                             var resultStr = baseResult.getResult().result_str
                                             result.text = resultStr
                                         }
+
                                         override fun onFail(errorInfo: BaseErrorInfo) {
                                             result.text = errorInfo.errorMsg
                                         }
@@ -252,7 +258,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-            },2000)
+            }, 2000)
         }
 
         addParams.setOnClickListener {

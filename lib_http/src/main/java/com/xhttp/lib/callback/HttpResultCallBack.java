@@ -1,9 +1,9 @@
 package com.xhttp.lib.callback;
 
 import com.xhttp.lib.BaseResult;
-import com.xhttp.lib.config.BaseErrorInfo;
-import com.xhttp.lib.config.BaseHttpParams;
 import com.xhttp.lib.interfaces.callback.IHttpResultCallBack;
+import com.xhttp.lib.model.BaseErrorInfo;
+import com.xhttp.lib.params.BaseHttpParams;
 
 /**
  * 回调抽象类,使用此回调可以不强制重写 onEmpty 和 onFinal
@@ -12,7 +12,6 @@ import com.xhttp.lib.interfaces.callback.IHttpResultCallBack;
 public abstract class HttpResultCallBack implements IHttpResultCallBack {
 
     public HttpResultCallBack(){
-
     }
 
     @Override
@@ -21,35 +20,21 @@ public abstract class HttpResultCallBack implements IHttpResultCallBack {
     }
 
     @Override
-    public void onFailUse(BaseErrorInfo errorInfo) {
+    public void onFinal(BaseResult baseResult) {
+    }
+
+    @Override
+    public void onEmpty(BaseResult baseResult) {
 
     }
 
     @Override
-    public void onRequest(BaseHttpParams baseHttpParams) {
-
-    }
-
-    @Override
-    public void onFailRequest(BaseErrorInfo errorInfo) {
-
-    }
-
-    @Override
-    public void onBeforeDataParse(BaseHttpParams baseHttpParams, BaseResult baseResult) {
-
-    }
-
-    @Override
-    public void onEmpty(BaseErrorInfo errorInfo) {
-
+    public boolean onFailForResult(BaseResult baseResult) {
+        return false;
     }
 
     @Override
     public void onFail(BaseErrorInfo errorInfo) {
-    }
 
-    @Override
-    public void onFinal(BaseResult baseResult) {
     }
 }

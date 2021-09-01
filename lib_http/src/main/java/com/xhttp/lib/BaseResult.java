@@ -1,8 +1,8 @@
 package com.xhttp.lib;
 
-import com.xhttp.lib.config.BaseHttpConfig;
-import com.xhttp.lib.config.BaseErrorInfo;
+import com.xhttp.lib.model.BaseErrorInfo;
 import com.xhttp.lib.model.BaseRequestResult;
+import com.xhttp.lib.model.BaseResultData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,14 +13,21 @@ import java.util.Map;
  * Created by lixingxing on 2019/3/26.
  */
 public class BaseResult {
-    public BaseResult(){}
+    public BaseResult(){
+        result = new Result();
+    }
 
     // 是否成功
     public boolean success = false;
     // 是否是空数据  空数据的时候 success 应为true
     public boolean isEmpty = false;
 
+    // 网络请求元数据
     public BaseRequestResult baseRequestResult;
+
+    // 解析后的值
+    public BaseResultData baseResultData;
+
     // 错误信息描述
     public BaseErrorInfo errorInfo = new BaseErrorInfo();
 

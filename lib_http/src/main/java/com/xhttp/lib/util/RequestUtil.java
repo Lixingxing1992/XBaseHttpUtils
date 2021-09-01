@@ -1,10 +1,7 @@
 package com.xhttp.lib.util;
 
-import com.xhttp.lib.BaseResult;
 import com.xhttp.lib.config.BaseHttpConfig;
 import com.xhttp.lib.config.BaseHttpParams;
-import com.xhttp.lib.config.BaseErrorInfo;
-import com.xhttp.lib.interfaces.callback.IHttpFileResultCallBack;
 import com.xhttp.lib.model.BaseRequestResult;
 
 import org.apache.http.conn.ConnectTimeoutException;

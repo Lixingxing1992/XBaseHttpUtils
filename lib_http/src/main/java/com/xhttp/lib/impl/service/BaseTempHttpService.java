@@ -9,8 +9,6 @@ import com.xhttp.lib.interfaces.http.IHttpService;
 import com.xhttp.lib.model.BaseRequestResult;
 import com.xhttp.lib.params.BaseHttpParams;
 import com.xhttp.lib.rquest.BaseHttpRequestUtils;
-import com.xhttp.lib.util.RequestUtil;
-import com.xhttp.lib.util.encryption.BaseEncodeUtil;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;

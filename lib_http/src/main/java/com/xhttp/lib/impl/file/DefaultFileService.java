@@ -6,9 +6,6 @@ import com.xhttp.lib.interfaces.file.IFileService;
 import com.xhttp.lib.model.BaseRequestResult;
 import com.xhttp.lib.params.BaseHttpParams;
 import com.xhttp.lib.rquest.BaseHttpRequestUtils;
-import com.xhttp.lib.rquest.RequestUtil;
-
-import java.io.File;
 
 /**
  * Created by lixingxing on 2019/6/20.

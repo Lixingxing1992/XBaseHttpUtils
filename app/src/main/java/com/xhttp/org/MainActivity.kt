@@ -3,9 +3,9 @@ package com.xhttp.org
 import android.app.ProgressDialog
 import android.os.Bundle
 import android.os.Handler
-import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
 import com.xhttp.lib.BaseHttpUtils
 import com.xhttp.lib.BaseResult
 import com.xhttp.lib.callback.HttpResultCallBack
@@ -20,7 +20,7 @@ import com.xhttp.lib.interfaces.http.IHttpService
 import com.xhttp.lib.model.BaseErrorInfo
 import com.xhttp.lib.model.BaseResultData
 import com.xhttp.lib.params.BaseHttpDialogParams
-import com.xhttp.lib.util.BaseThreadPoolUtil
+import com.xhttp.lib.util.BaseThreadPoolUtils
 import com.xhttp.org.model.AchievnmentModel
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -226,7 +226,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     // Get
                     R.id.radioButton2 -> {
-                        BaseThreadPoolUtil.execute {
+                        BaseThreadPoolUtils.execute {
                             BaseHttpUtils.create(waitingDialog)
                                     .initUrl(url.text.toString())
                                     .initIHttpService(httpService)
@@ -286,8 +286,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    var postHttpUrl = "http://103.10.3.77:59527/yuyuan-interact/achievement/userAchievement"//"http://www.xiaooo.club:8080/tangdao/api/banner/getBannerByType"
-    var getHttpUrl = "http://103.10.3.77:59527/yuyuan-resource/user/randPage/261/30"
+    var postHttpUrl = ""//"http://www.xiaooo.club:8080/tangdao/api/banner/getBannerByType"
+    var getHttpUrl = ""
     var paramsStr = ""
-    var map = mapOf("mobile" to "18260031044")//mapOf("type" to "50")//
+    var map = mapOf("mobile" to "10000000000")//mapOf("type" to "50")//
 }
